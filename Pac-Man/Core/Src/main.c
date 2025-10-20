@@ -37,7 +37,6 @@ typedef struct {
 /* USER CODE BEGIN PD */
 #define NROW 12
 #define NCOL 16
-#define SQ_SIZE 240/NROW
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
