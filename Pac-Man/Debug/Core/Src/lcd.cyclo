@@ -1,0 +1,3 @@
+../Core/Src/lcd.c:47:6:LCD_demo	3
+../Core/Src/lcd.c:76:13:LCD_SetHint	1
+../Core/Src/lcd.c:104:13:LCD_Show_Feature	5

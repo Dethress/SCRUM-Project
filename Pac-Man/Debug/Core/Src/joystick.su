@@ -1,0 +1,2 @@
+../Core/Src/joystick.c:46:6:Joystick_demo	16	static
+../Core/Src/joystick.c:139:13:Joystick_SetHint	16	static

@@ -1,0 +1,5 @@
+../Drivers/BSP/STM3210C_EVAL/stm3210c_eval_ts.c:114:9:BSP_TS_Init	3
+../Drivers/BSP/STM3210C_EVAL/stm3210c_eval_ts.c:145:9:BSP_TS_ITConfig	1
+../Drivers/BSP/STM3210C_EVAL/stm3210c_eval_ts.c:157:9:BSP_TS_ITGetStatus	1
+../Drivers/BSP/STM3210C_EVAL/stm3210c_eval_ts.c:168:9:BSP_TS_GetState	8
+../Drivers/BSP/STM3210C_EVAL/stm3210c_eval_ts.c:216:6:BSP_TS_ITClear	1

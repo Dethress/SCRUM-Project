@@ -1,0 +1,3 @@
+../Core/Src/touchscreen.c:49:6:Touchscreen_demo	22
+../Core/Src/touchscreen.c:159:13:Touchscreen_SetHint	1
+../Core/Src/touchscreen.c:188:13:Touchscreen_DrawBackground	6

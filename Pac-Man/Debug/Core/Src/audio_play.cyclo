@@ -1,0 +1,5 @@
+../Core/Src/audio_play.c:85:6:AudioPlay_demo	14
+../Core/Src/audio_play.c:211:13:AudioPlay_SetHint	1
+../Core/Src/audio_play.c:242:13:AudioPlay_DisplayInfos	3
+../Core/Src/audio_play.c:278:6:BSP_AUDIO_OUT_TransferComplete_CallBack	6
+../Core/Src/audio_play.c:327:6:BSP_AUDIO_OUT_Error_CallBack	1

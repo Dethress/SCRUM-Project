@@ -1,0 +1,6 @@
+../Drivers/BSP/STM3210C_EVAL/stm3210c_eval_accelerometer.c:73:9:BSP_ACCELERO_Init	24	static
+../Drivers/BSP/STM3210C_EVAL/stm3210c_eval_accelerometer.c:127:9:BSP_ACCELERO_ReadID	16	static
+../Drivers/BSP/STM3210C_EVAL/stm3210c_eval_accelerometer.c:141:6:BSP_ACCELERO_Reset	8	static
+../Drivers/BSP/STM3210C_EVAL/stm3210c_eval_accelerometer.c:152:6:BSP_ACCELERO_Click_ITConfig	8	static
+../Drivers/BSP/STM3210C_EVAL/stm3210c_eval_accelerometer.c:164:6:BSP_ACCELERO_Click_ITClear	8	static
+../Drivers/BSP/STM3210C_EVAL/stm3210c_eval_accelerometer.c:176:6:BSP_ACCELERO_GetXYZ	24	static

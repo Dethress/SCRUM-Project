@@ -1,0 +1,7 @@
+../Drivers/BSP/STM3210C_EVAL/stm3210c_eval_io.c:117:9:BSP_IO_Init	16	static
+../Drivers/BSP/STM3210C_EVAL/stm3210c_eval_io.c:154:10:BSP_IO_ITGetStatus	32	static
+../Drivers/BSP/STM3210C_EVAL/stm3210c_eval_io.c:183:6:BSP_IO_ITClear	24	static
+../Drivers/BSP/STM3210C_EVAL/stm3210c_eval_io.c:218:9:BSP_IO_ConfigPin	24	static
+../Drivers/BSP/STM3210C_EVAL/stm3210c_eval_io.c:247:6:BSP_IO_WritePin	24	static
+../Drivers/BSP/STM3210C_EVAL/stm3210c_eval_io.c:274:10:BSP_IO_ReadPin	32	static
+../Drivers/BSP/STM3210C_EVAL/stm3210c_eval_io.c:303:6:BSP_IO_TogglePin	24	static

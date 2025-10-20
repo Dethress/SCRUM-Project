@@ -1,0 +1,7 @@
+../Core/Src/ts_calibration.c:50:6:Touchscreen_Calibration	24	static
+../Core/Src/ts_calibration.c:99:13:TouchscreenCalibration_SetHint	8	static
+../Core/Src/ts_calibration.c:123:13:GetPhysValues	24	static
+../Core/Src/ts_calibration.c:149:13:WaitForPressedState	32	static
+../Core/Src/ts_calibration.c:180:10:Calibration_GetX	16	static
+../Core/Src/ts_calibration.c:190:10:Calibration_GetY	16	static
+../Core/Src/ts_calibration.c:199:9:IsCalibrationDone	4	static

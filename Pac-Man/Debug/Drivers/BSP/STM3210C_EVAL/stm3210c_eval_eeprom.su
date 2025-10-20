@@ -1,0 +1,9 @@
+../Drivers/BSP/STM3210C_EVAL/stm3210c_eval_eeprom.c:131:10:BSP_EEPROM_Init	8	static
+../Drivers/BSP/STM3210C_EVAL/stm3210c_eval_eeprom.c:153:6:BSP_EEPROM_SelectDevice	16	static
+../Drivers/BSP/STM3210C_EVAL/stm3210c_eval_eeprom.c:182:10:BSP_EEPROM_ReadBuffer	24	static
+../Drivers/BSP/STM3210C_EVAL/stm3210c_eval_eeprom.c:203:10:BSP_EEPROM_WriteBuffer	40	static
+../Drivers/BSP/STM3210C_EVAL/stm3210c_eval_eeprom.c:356:13:BSP_EEPROM_TIMEOUT_UserCallback	4	static
+../Drivers/BSP/STM3210C_EVAL/stm3210c_eval_eeprom.c:375:17:EEPROM_I2C_Init	8	static
+../Drivers/BSP/STM3210C_EVAL/stm3210c_eval_eeprom.c:422:17:EEPROM_I2C_ReadBuffer	32	static
+../Drivers/BSP/STM3210C_EVAL/stm3210c_eval_eeprom.c:459:17:EEPROM_I2C_WritePage	32	static
+../Drivers/BSP/STM3210C_EVAL/stm3210c_eval_eeprom.c:490:17:EEPROM_I2C_WaitEepromStandbyState	8	static

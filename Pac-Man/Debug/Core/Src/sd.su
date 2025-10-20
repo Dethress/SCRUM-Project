@@ -1,0 +1,4 @@
+../Core/Src/sd.c:53:6:SD_demo	16	static
+../Core/Src/sd.c:174:13:SD_SetHint	16	static
+../Core/Src/sd.c:207:13:Fill_Buffer	32	static
+../Core/Src/sd.c:225:16:Buffercmp	24	static

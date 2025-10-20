@@ -1,0 +1,2 @@
+../Core/Src/joystick.c:46:6:Joystick_demo	14
+../Core/Src/joystick.c:139:13:Joystick_SetHint	1
