@@ -1,0 +1,5 @@
+../Core/Src/eeprom.c:65:6:EEPROM_demo	8	static
+../Core/Src/eeprom.c:109:13:EEPROM_SetHint	16	static
+../Core/Src/eeprom.c:137:13:EEPROM_Show_Feature	144	static
+../Core/Src/eeprom.c:262:6:BSP_EEPROM_TIMEOUT_UserCallback	4	static
+../Core/Src/eeprom.c:274:19:Buffercmp	24	static

@@ -1,0 +1,10 @@
+../Drivers/BSP/Components/ak4343/ak4343.c:142:10:ak4343_Init	40	static
+../Drivers/BSP/Components/ak4343/ak4343.c:268:10:ak4343_Play	24	static
+../Drivers/BSP/Components/ak4343/ak4343.c:289:10:ak4343_Pause	24	static
+../Drivers/BSP/Components/ak4343/ak4343.c:305:10:ak4343_Resume	24	static
+../Drivers/BSP/Components/ak4343/ak4343.c:325:10:ak4343_Stop	24	static
+../Drivers/BSP/Components/ak4343/ak4343.c:346:10:ak4343_SetVolume	24	static
+../Drivers/BSP/Components/ak4343/ak4343.c:367:10:ak4343_SetMute	24	static
+../Drivers/BSP/Components/ak4343/ak4343.c:395:10:ak4343_SetOutputMode	24	static
+../Drivers/BSP/Components/ak4343/ak4343.c:460:6:ak4343_MCLKOutput	16	static
+../Drivers/BSP/Components/ak4343/ak4343.c:474:16:CODEC_IO_Write	24	static
