@@ -148,24 +148,10 @@ __ALIGN_END uint8_t pinkyRight[776] = {
 0xd9,0xfc,0xd9,0xfc,0xd9,0xfc,0x45,0xa1,0x45,0xa1,0x45,0xa1,0x45,0xa1,0x45,0xa1,
 0x45,0xa1,0x45,0xa1,0x45,0xa1,0x45,0xa1
 };
-// gameBoard represents game arena:
-// 0: field is empty;
-// 1: Pac-Man;
-// 2: Pinky;
 uint8_t gameBoard[NROW][NCOL] = {{0}};
-// visitedFields keeps track of fields visited by Pac-Man and facilitates counting points:
-// 0: field not visited yet;
-// 1: field visited already;
-uint8_t visitedFields[NROW][NCOL] = {{0}};
 Position pacmanPos = {0, 0};
 Position pinkyPos = {NROW-1, NCOL-1};
 JOYState_TypeDef JoyState = JOY_NONE;
-uint16_t pointsCounter = 0;
-// gameStatus represents status of current game:
-// 0: Pinky wins;
-// 1: game running;
-// 2: Pac-Man wins;
-uint8_t gameStatus = 1;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -177,15 +163,9 @@ void myLowLevelRedLedInit(void);
 int8_t myAdc1Init(void);
 uint32_t getSeedValue(void);
 void gameSetup(void);
-void moveDown(void);
-void moveUp(void);
-void moveLeft(void);
 void moveRight(void);
 void movePinky(void);
-void myDrawPixel(uint16_t, uint16_t, uint16_t);
-void myDrawFullRectangle(uint16_t, uint16_t, uint16_t, uint16_t, uint16_t);
-void myDrawFullCircle(uint16_t, uint16_t, uint16_t, uint16_t);
-void gameOver(void);
+void myFullRectangle(uint16_t, uint16_t, uint16_t, uint16_t);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -234,14 +214,11 @@ int main(void) {
 		Error_Handler();
 	}
 
-	// Configure the LCD (for device setup error messages only):
-	BSP_LCD_Clear(LCD_COLOR_DARKGRAY);
-	BSP_LCD_SetFont(&Font12);
-	BSP_LCD_SetTextColor(LCD_COLOR_RED);
-
 	// Configure joystick in polling mode:
 	/*
 	if (BSP_JOY_Init(JOY_MODE_GPIO) != IO_OK) {
+		BSP_LCD_SetBackColor(LCD_COLOR_WHITE);
+		BSP_LCD_SetTextColor(LCD_COLOR_RED);
 		BSP_LCD_DisplayStringAt(0, 145, (uint8_t *)"ERROR", CENTER_MODE);
 		BSP_LCD_DisplayStringAt(0, 160, (uint8_t *)"Joystick cannot be initialized", CENTER_MODE);
 		Error_Handler();
@@ -249,6 +226,8 @@ int main(void) {
 	*/
 	// Configure joystick to use interrupts:
 	if (BSP_JOY_Init(JOY_MODE_EXTI) != IO_OK) {
+		BSP_LCD_SetBackColor(LCD_COLOR_WHITE);
+		BSP_LCD_SetTextColor(LCD_COLOR_RED);
 		BSP_LCD_DisplayStringAt(0, 145, (uint8_t *)"ERROR", CENTER_MODE);
 		BSP_LCD_DisplayStringAt(0, 160, (uint8_t *)"Joystick cannot be initialized", CENTER_MODE);
 		Error_Handler();
@@ -256,6 +235,8 @@ int main(void) {
 
 	// Configure ADC1:
 	if (myAdc1Init() != HAL_OK) {
+		BSP_LCD_SetBackColor(LCD_COLOR_WHITE);
+		BSP_LCD_SetTextColor(LCD_COLOR_RED);
 		BSP_LCD_DisplayStringAt(0, 145, (uint8_t *)"ERROR", CENTER_MODE);
 		BSP_LCD_DisplayStringAt(0, 160, (uint8_t *)"ADC1 cannot be initialized", CENTER_MODE);
 		Error_Handler();
@@ -286,7 +267,9 @@ int main(void) {
 			// moveLeft();
 			break;
 		case JOY_RIGHT:
-			// moveRight();
+			moveRight();
+			for (i = 0;i < 2000000;i++);
+			// HAL_Delay(200);
 			break;
 		default:
 			break;
@@ -295,17 +278,6 @@ int main(void) {
 		HAL_Delay(500);
 		movePinky();
 
-		// Check for game over condition:
-		if (pointsCounter == NROW*NCOL) {
-			// Pac-Man wins:
-			gameStatus = 2;
-			gameOver();
-		}
-		if ((pinkyPos.row == pacmanPos.row) && (pinkyPos.col == pacmanPos.col)) {
-			// Pinky wins:
-			gameStatus = 0;
-			gameOver();
-		}
 	/* USER CODE END WHILE */
 	/* USER CODE BEGIN 3 */
 	}
@@ -366,16 +338,16 @@ void SystemClock_Config(void) {
 /* USER CODE BEGIN 4 */
 // Function configuring RED LED using HAL:
 void myRedLedInit(void) {
-	GPIO_InitTypeDef gpioInit = { 0 };
+	GPIO_InitTypeDef gpioInit = {0};
 
 	/* Enable the GPIO_LED clock */
 	__HAL_RCC_GPIOD_CLK_ENABLE();
 
 	/* Configure the GPIO_LED pin */
-	gpioInit.Pin = GPIO_PIN_3;
-	gpioInit.Mode = GPIO_MODE_OUTPUT_PP;
-	gpioInit.Pull = GPIO_NOPULL;
-	gpioInit.Speed = GPIO_SPEED_FREQ_LOW;
+	gpioInit.Pin    = GPIO_PIN_3;
+	gpioInit.Mode   = GPIO_MODE_OUTPUT_PP;
+	gpioInit.Pull   = GPIO_NOPULL;
+	gpioInit.Speed  = GPIO_SPEED_FREQ_LOW;
 
 	HAL_GPIO_Init(GPIOD, &gpioInit);
 	// HAL_GPIO_WritePin(GPIOD, GPIO_PIN_3, 0);
@@ -400,15 +372,15 @@ void myLowLevelRedLedInit(void) {
 	GPIOD->CRL &= ~(1 << 12);
 	// Configure PD3 as output push/pull:
 	// Set bits 15 and 14 to '00':
-	GPIOD->CRL &= ~0b00000000000000001100000000000000;
+	GPIOD->CRL &=~0b00000000000000001100000000000000;
 }
 
 
 // Function initializing ADC1:
 int8_t myAdc1Init(void) {
 	uint8_t ret = HAL_OK;
-	ADC_HandleTypeDef hadc1 = { 0 };
-	ADC_ChannelConfTypeDef sConfig = { 0 };
+	ADC_HandleTypeDef hadc1 = {0};
+	ADC_ChannelConfTypeDef sConfig = {0};
 
 	/** Common configuration */
 	hadc1.Instance = ADC1;
@@ -447,15 +419,15 @@ uint32_t getSeedValue(void) {
 	while ((ADC1->SR & 0x00000002) == 0);
 	ret = (uint32_t)ADC1->DR;
 	// Clear the STRT bit:
-	ADC1->SR &= ~0x00000010;
+	ADC1->SR &=~0x00000010;
 
 	return ret;
 }
 
+
 // Function responsible for game setup:
 void gameSetup(void) {
 	uint16_t i = 0;
-	uint16_t j = 0;
 
 	// Clear the screen:
 	BSP_LCD_Clear(LCD_COLOR_BLACK);
@@ -469,134 +441,124 @@ void gameSetup(void) {
 	for (i = 0;i < 320;i += SQ_SIZE)
 		BSP_LCD_DrawVLine(i, 0, 240);
 
-	// Draw points:
-	for (i = 0;i < 320;i += SQ_SIZE) {
-		for (j = 0;j < 240;j += SQ_SIZE) {
-			myDrawPixel(i + SQ_SIZE / 2, j + SQ_SIZE / 2, LCD_COLOR_WHITE);
-		}
-	}
-
 	// Draw initial Pac-Man position:
-	pacmanPos.row = rand() % NROW;
-	pacmanPos.col = rand() % NCOL;
+	pacmanPos.row = rand()%NROW;
+	pacmanPos.col = rand()%NCOL;
 	gameBoard[pacmanPos.row][pacmanPos.col] = 1;
-	visitedFields[pacmanPos.row][pacmanPos.col] = 1;
-	pointsCounter++;
 
-	// Draw Pac-Man:
-	myDrawFullCircle(SQ_SIZE * pacmanPos.col + SQ_SIZE / 2, SQ_SIZE * pacmanPos.row + SQ_SIZE / 2, SQ_SIZE / 2 - 1,
-		LCD_COLOR_YELLOW);
+	// Draw Pac-Man (yellow):
+	BSP_LCD_SetTextColor(LCD_COLOR_YELLOW);
+	myFullRectangle(pacmanPos.col*SQ_SIZE+1, pacmanPos.row*SQ_SIZE+1, SQ_SIZE-1, SQ_SIZE-1);
 
 	// Draw initial Pinky position:
 	do {
-		pinkyPos.row = rand() % NROW;
-		pinkyPos.col = rand() % NCOL;
-	} while (pinkyPos.row == pacmanPos.row && pinkyPos.col == pacmanPos.col);
+		pinkyPos.row = rand()%NROW;
+		pinkyPos.col = rand()%NCOL;
+	}
+	while (pinkyPos.row == pacmanPos.row && pinkyPos.col == pacmanPos.col);
 	gameBoard[pinkyPos.row][pinkyPos.col] = 2;
 
 	// Draw Pinky:
-	BSP_LCD_DrawBitmap(pinkyPos.col * SQ_SIZE + 1, pinkyPos.row * SQ_SIZE + 1, pinkyLeft);
-}
-
-
-void moveDown(void) {
-	// Erase Pac-Man from its current position:
-	myDrawFullRectangle(pacmanPos.col * SQ_SIZE + 1, pacmanPos.row * SQ_SIZE + 1,
-		SQ_SIZE - 1, SQ_SIZE - 1, LCD_COLOR_BLACK);
-
-	// Move Pac-Man down:
-	gameBoard[pacmanPos.row][pacmanPos.col] = 0;
-	if (pacmanPos.row == NROW - 1)
-		pacmanPos.row = 0;
-	else
-		pacmanPos.row++;
-	gameBoard[pacmanPos.row][pacmanPos.col] = 1;
-
-	// Update the number of points, if necessary:
-	if (visitedFields[pacmanPos.row][pacmanPos.col] == 0) {
-		pointsCounter++;
-		visitedFields[pacmanPos.row][pacmanPos.col] = 1;
-	}
-
-	// Draw Pac-Man in its new position:
-	myDrawFullCircle(SQ_SIZE * pacmanPos.col + SQ_SIZE / 2, SQ_SIZE * pacmanPos.row + SQ_SIZE / 2, SQ_SIZE / 2 - 1,
-		LCD_COLOR_YELLOW);
-}
-
-void moveUp(void) {
-	// Erase Pac-Man from its current position:
-	myDrawFullRectangle(pacmanPos.col * SQ_SIZE + 1, pacmanPos.row * SQ_SIZE + 1,
-		SQ_SIZE - 1, SQ_SIZE - 1, LCD_COLOR_BLACK);
-
-	// Move Pac-Man up:
-	gameBoard[pacmanPos.row][pacmanPos.col] = 0;
-	if (pacmanPos.row == 0)
-		pacmanPos.row = NROW - 1;
-	else
-		pacmanPos.row--;
-	gameBoard[pacmanPos.row][pacmanPos.col] = 1;
-
-	// Update the number of points, if necessary:
-	if (visitedFields[pacmanPos.row][pacmanPos.col] == 0) {
-		pointsCounter++;
-		visitedFields[pacmanPos.row][pacmanPos.col] = 1;
-	}
-
-	// Draw Pac-Man in its new position:
-	myDrawFullCircle(SQ_SIZE * pacmanPos.col + SQ_SIZE / 2, SQ_SIZE * pacmanPos.row + SQ_SIZE / 2, SQ_SIZE / 2 - 1,
-		LCD_COLOR_YELLOW);
-}
-
-
-void moveLeft(void) {
-	// Erase Pac-Man from its current position:
-	myDrawFullRectangle(pacmanPos.col * SQ_SIZE + 1, pacmanPos.row * SQ_SIZE + 1,
-		SQ_SIZE - 1, SQ_SIZE - 1, LCD_COLOR_BLACK);
-
-	// Move Pac-Man to the left:
-	gameBoard[pacmanPos.row][pacmanPos.col] = 0;
-	if (pacmanPos.col == 0)
-		pacmanPos.col = NCOL - 1;
-	else
-		pacmanPos.col--;
-	gameBoard[pacmanPos.row][pacmanPos.col] = 1;
-
-	// Update the number of points, if necessary:
-	if (visitedFields[pacmanPos.row][pacmanPos.col] == 0) {
-		pointsCounter++;
-		visitedFields[pacmanPos.row][pacmanPos.col] = 1;
-	}
-
-	// Draw Pac-Man in its new position:
-	myDrawFullCircle(SQ_SIZE * pacmanPos.col + SQ_SIZE / 2, SQ_SIZE * pacmanPos.row + SQ_SIZE / 2, SQ_SIZE / 2 - 1,
-		LCD_COLOR_YELLOW);
+	BSP_LCD_DrawBitmap(pinkyPos.col*SQ_SIZE+1, pinkyPos.row*SQ_SIZE+1, pinkyLeft);
 }
 
 
 void moveRight(void) {
-	// Erase Pac-Man from its current position:
-	myDrawFullRectangle(pacmanPos.col * SQ_SIZE + 1, pacmanPos.row * SQ_SIZE + 1,
-		SQ_SIZE - 1, SQ_SIZE - 1, LCD_COLOR_BLACK);
+	// Erase Pac-Man from current position:
+	BSP_LCD_SetTextColor(LCD_COLOR_BLACK);
+	myFullRectangle(pacmanPos.col*SQ_SIZE+1, pacmanPos.row*SQ_SIZE+1,
+			   SQ_SIZE-1, SQ_SIZE-1);
+
+
+	gameBoard[pacmanPos.row][pacmanPos.col] = 0;
 
 	// Move Pac-Man to the right:
-	gameBoard[pacmanPos.row][pacmanPos.col] = 0;
-	if (pacmanPos.col == NCOL - 1)
+	pacmanPos.col++;
+	if (pacmanPos.col == NCOL)
 		pacmanPos.col = 0;
-	else
-		pacmanPos.col++;
 	gameBoard[pacmanPos.row][pacmanPos.col] = 1;
 
-	// Update the number of points, if necessary:
-	if (visitedFields[pacmanPos.row][pacmanPos.col] == 0) {
-		pointsCounter++;
-		visitedFields[pacmanPos.row][pacmanPos.col] = 1;
-	}
-
-	// Draw Pac-Man in its new position:
-	myDrawFullCircle(SQ_SIZE * pacmanPos.col + SQ_SIZE / 2, SQ_SIZE * pacmanPos.row + SQ_SIZE / 2, SQ_SIZE / 2 - 1,
-		LCD_COLOR_YELLOW);
+	// Draw Pac-Man in his new position:
+	BSP_LCD_SetTextColor(LCD_COLOR_YELLOW);
+	myFullRectangle(pacmanPos.col*SQ_SIZE+1, pacmanPos.row*SQ_SIZE+1,
+			   SQ_SIZE-1, SQ_SIZE-1);
 }
 
+
+void movePinky(void) {
+	int8_t distanceRows = (int8_t)pinkyPos.row - (int8_t)pacmanPos.row;
+	int8_t distanceCols = (int8_t)pinkyPos.col - (int8_t)pacmanPos.col;
+
+	// Erase Pinky at its current position:
+	BSP_LCD_SetTextColor(LCD_COLOR_BLACK);
+	myFullRectangle(pinkyPos.col*SQ_SIZE+1, pinkyPos.row*SQ_SIZE+1,
+			   SQ_SIZE-1, SQ_SIZE-1);
+	gameBoard[pinkyPos.row][pinkyPos.col] = 0;
+
+	if (abs(distanceRows) < abs(distanceCols)) {
+		// Move Pinky along columns:
+		if (pinkyPos.col < pacmanPos.col) {
+			// Pinky to the left, so move right:
+			pinkyPos.col++;
+			BSP_LCD_DrawBitmap(pinkyPos.col*SQ_SIZE+1, pinkyPos.row*SQ_SIZE+1,
+					pinkyRight);
+		}
+		else {
+			// Pinky to the right, so move left:
+			pinkyPos.col--;
+			BSP_LCD_DrawBitmap(pinkyPos.col*SQ_SIZE+1, pinkyPos.row*SQ_SIZE+1,
+					pinkyLeft);
+		}
+	}
+	else {
+		// Move Pinky along rows:
+		if (pinkyPos.row < pacmanPos.row) {
+			// Pinky is up, so move down:
+			pinkyPos.row++;
+			BSP_LCD_SetTextColor(0xFCD9);
+			myFullRectangle(pinkyPos.col*SQ_SIZE+1, pinkyPos.row*SQ_SIZE+1,
+					   SQ_SIZE-1, SQ_SIZE-1);
+		}
+		else {
+			// Pinky is down, so move up:
+			pinkyPos.row--;
+			BSP_LCD_SetTextColor(0xFCD9);
+			myFullRectangle(pinkyPos.col*SQ_SIZE+1, pinkyPos.row*SQ_SIZE+1,
+					   SQ_SIZE-1, SQ_SIZE-1);
+		}
+	}
+
+	gameBoard[pinkyPos.row][pinkyPos.col] = 2;
+}
+
+// Function drawing a full rectangle:
+void myFullRectangle(uint16_t Xpos, uint16_t Ypos, uint16_t Width, uint16_t Height) {
+	while(Height--) {
+		BSP_LCD_DrawHLine(Xpos, Ypos++, Width);
+	};
+}
+
+
+void HAL_GPIO_EXTI_Callback(uint16_t GPIO_PIN) {
+	if (GPIO_PIN == IOE_IT_PIN) {
+		switch(JoyState) {
+		case JOY_UP:
+		  // moveUp();
+		  break;
+		case JOY_DOWN:
+		  // moveDown();
+		  break;
+		case JOY_LEFT:
+		  // moveLeft();
+		  break;
+		case JOY_RIGHT:
+		  moveRight();
+		  break;
+		default:
+		  break;
+		}
+	}
+}
 /* USER CODE END 4 */
 
 /**
