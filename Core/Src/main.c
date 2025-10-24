@@ -597,6 +597,187 @@ void moveRight(void) {
 		LCD_COLOR_YELLOW);
 }
 
+void movePinky(void) {
+	int8_t distanceRows = (int8_t)pinkyPos.row - (int8_t)pacmanPos.row;
+	int8_t distanceCols = (int8_t)pinkyPos.col - (int8_t)pacmanPos.col;
+
+	// Erase Pinky at its current position:
+	myDrawFullRectangle(pinkyPos.col * SQ_SIZE + 1, pinkyPos.row * SQ_SIZE + 1,
+		SQ_SIZE - 1, SQ_SIZE - 1, LCD_COLOR_BLACK);
+	gameBoard[pinkyPos.row][pinkyPos.col] = 0;
+
+	// Redraw the point, if necessary:
+	if (visitedFields[pinkyPos.row][pinkyPos.col] == 0) {
+		myDrawPixel(SQ_SIZE * pinkyPos.col + 1 + SQ_SIZE / 2, SQ_SIZE * pinkyPos.row + 1 + SQ_SIZE / 2,
+			LCD_COLOR_WHITE);
+	}
+
+	if (abs(distanceRows) < abs(distanceCols)) {
+		// Move Pinky along columns:
+		if (pinkyPos.col < pacmanPos.col) {
+			// Pinky to the left, so moves right:
+			pinkyPos.col++;
+			BSP_LCD_DrawBitmap(pinkyPos.col * SQ_SIZE + 1, pinkyPos.row * SQ_SIZE + 1,
+				pinkyRight);
+		}
+		else {
+			// Pinky to the right, so moves left:
+			pinkyPos.col--;
+			BSP_LCD_DrawBitmap(pinkyPos.col * SQ_SIZE + 1, pinkyPos.row * SQ_SIZE + 1,
+				pinkyLeft);
+		}
+	}
+	else {
+		// Move Pinky along rows:
+		if (pinkyPos.row < pacmanPos.row) {
+			// Pinky is up, so moves down:
+			pinkyPos.row++;
+		}
+		else {
+			// Pinky is down, so moves up:
+			pinkyPos.row--;
+		}
+		myDrawFullCircle(SQ_SIZE * pinkyPos.col + SQ_SIZE / 2, SQ_SIZE * pinkyPos.row + SQ_SIZE / 2, SQ_SIZE / 2 - 1,
+			0xFCD9);
+	}
+
+	gameBoard[pinkyPos.row][pinkyPos.col] = 2;
+}
+
+
+/**
+  * @brief  Draws a pixel on LCD.
+  * @param  posX: X position
+  * @param  posY: Y position
+  * @param  color: pixel color in RGB mode (5-6-5)
+  */
+void myDrawPixel(uint16_t posX, uint16_t posY, uint16_t color) {
+	uint16_t backup_color = BSP_LCD_GetTextColor();
+	BSP_LCD_SetTextColor(color);
+
+	BSP_LCD_DrawHLine(posX, posY, 1);
+
+	BSP_LCD_SetTextColor(backup_color);
+}
+
+
+// Function drawing a full rectangle:
+void myDrawFullRectangle(uint16_t Xpos, uint16_t Ypos, uint16_t Width, uint16_t Height, uint16_t color) {
+	uint16_t backup_color = BSP_LCD_GetTextColor();
+	BSP_LCD_SetTextColor(color);
+
+	while (Height--) {
+		BSP_LCD_DrawHLine(Xpos, Ypos++, Width);
+	}
+
+	BSP_LCD_SetTextColor(backup_color);
+}
+
+
+// Function drawing a full circle:
+void myDrawFullCircle(uint16_t centerX, uint16_t centerY, uint16_t radius, uint16_t color) {
+	int16_t i, j;
+	uint16_t backup_color = BSP_LCD_GetTextColor();
+	BSP_LCD_SetTextColor(color);
+
+	for (i = (-1) * radius;i <= radius;i++) {
+		for (j = (-1) * radius;j <= radius;j++) {
+			if ((i * i + j * j) <= radius * radius) {
+				BSP_LCD_DrawVLine(centerX + i, centerY + j, (-2) * j);
+				break;
+			}
+		}
+	}
+
+	BSP_LCD_SetTextColor(backup_color);
+}
+
+static inline void DoMove(Dir d) {
+	switch (d) {
+	case DIR_UP:    moveUp();    break;
+	case DIR_DOWN:  moveDown();  break;
+	case DIR_LEFT:  moveLeft();  break;
+	case DIR_RIGHT: moveRight(); break;
+	default: break;
+	}
+}
+
+static Dir MapJoyToDir(JOYState_TypeDef js) {
+	switch (js) {
+	case JOY_UP:    return DIR_UP;
+	case JOY_DOWN:  return DIR_DOWN;
+	case JOY_LEFT:  return DIR_LEFT;
+	case JOY_RIGHT: return DIR_RIGHT;
+	default:        return DIR_NONE;
+	}
+}
+
+// Polling z debounce i auto-repeat
+static void HandleInput(uint32_t now_ms) {
+	JOYState_TypeDef js = BSP_JOY_GetState();
+	Dir d = MapJoyToDir(js);
+
+	// Zmiana stanu? – debounce
+	if (d != g_btn_last) {
+		if ((now_ms - g_btn_last_change_ms) >= BTN_DEBOUNCE_MS) {
+			g_btn_last = d;
+			g_btn_last_change_ms = now_ms;
+			g_btn_last_repeat_ms = 0;     // reset powtarzania
+			if (d != DIR_NONE) {
+				DoMove(d);                  // natychmiast pierwszy krok po stabilnej zmianie
+			}
+		}
+		return; // jeszcze nic wiêcej – czekamy a¿ siê ustabilizuje/odmierzamy delay
+	}
+
+	// Trzymanie – auto-repeat
+	if (d != DIR_NONE) {
+		if (g_btn_last_repeat_ms == 0) {
+			// pierwszy repeat po opóŸnieniu
+			if ((now_ms - g_btn_last_change_ms) >= BTN_REPEAT_DELAY_MS) {
+				DoMove(d);
+				g_btn_last_repeat_ms = now_ms;
+			}
+		}
+		else {
+			// kolejne repeaty co BTN_REPEAT_MS
+			if ((now_ms - g_btn_last_repeat_ms) >= BTN_REPEAT_MS) {
+				DoMove(d);
+				g_btn_last_repeat_ms = now_ms;
+			}
+		}
+	}
+}
+
+
+void gameOver(void) {
+	if (gameStatus == 0) {
+		BSP_LCD_DisplayStringAt(0, 80, (uint8_t*)"Game over. You lost.", CENTER_MODE);
+		BSP_LCD_DisplayStringAt(0, 100, (uint8_t*)"Press \'Reset\' to play again.", CENTER_MODE);
+		while (1);
+	}
+	if (gameStatus == 2) {
+		BSP_LCD_DisplayStringAt(0, 80, (uint8_t*)"Congratulations. You won.", CENTER_MODE);
+		BSP_LCD_DisplayStringAt(0, 100, (uint8_t*)"Press \'Reset\' to play again.", CENTER_MODE);
+		while (1);
+	}
+}
+
+#if 0
+void HAL_GPIO_EXTI_Callback(uint16_t GPIO_PIN) {
+	if (GPIO_PIN == IOE_IT_PIN) {
+		JoyState = BSP_JOY_GetState();   // <— DODAJ TO
+		switch (JoyState) {
+		case JOY_DOWN:  moveDown();  break;
+		case JOY_UP:    moveUp();    break;
+		case JOY_LEFT:  moveLeft();  break;
+		case JOY_RIGHT: moveRight(); break;
+		default: break;
+		}
+	}
+}
+#endif
+
 /* USER CODE END 4 */
 
 /**
