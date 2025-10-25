@@ -240,20 +240,21 @@ int main(void) {
 	BSP_LCD_SetTextColor(LCD_COLOR_RED);
 
 	// Configure joystick in polling mode:
-	/*
+	
 	if (BSP_JOY_Init(JOY_MODE_GPIO) != IO_OK) {
 		BSP_LCD_DisplayStringAt(0, 145, (uint8_t *)"ERROR", CENTER_MODE);
 		BSP_LCD_DisplayStringAt(0, 160, (uint8_t *)"Joystick cannot be initialized", CENTER_MODE);
 		Error_Handler();
 	}
-	*/
+	
+
 	// Configure joystick to use interrupts:
-	if (BSP_JOY_Init(JOY_MODE_EXTI) != IO_OK) {
+	/*if (BSP_JOY_Init(JOY_MODE_EXTI) != IO_OK) {
 		BSP_LCD_DisplayStringAt(0, 145, (uint8_t *)"ERROR", CENTER_MODE);
 		BSP_LCD_DisplayStringAt(0, 160, (uint8_t *)"Joystick cannot be initialized", CENTER_MODE);
 		Error_Handler();
 	}
-
+	*/
 	// Configure ADC1:
 	if (myAdc1Init() != HAL_OK) {
 		BSP_LCD_DisplayStringAt(0, 145, (uint8_t *)"ERROR", CENTER_MODE);
