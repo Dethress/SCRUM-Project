@@ -46,6 +46,19 @@ typedef struct {
 
 /* Private variables ---------------------------------------------------------*/
 /* USER CODE BEGIN PV */
+
+// --- A3: Wejście z debounce + auto-repeat (polling) ---
+typedef enum { DIR_NONE=0, DIR_UP, DIR_DOWN, DIR_LEFT, DIR_RIGHT } Dir;
+
+#define BTN_DEBOUNCE_MS       20U    // filtr drgań styków
+#define BTN_REPEAT_DELAY_MS  160U    // po tyle ms pierwszy powtórzony krok
+#define BTN_REPEAT_MS         80U    // odstęp kolejnych kroków przy trzymaniu
+
+static Dir     g_btn_last = DIR_NONE;        // ostatni stabilny kierunek
+static uint32_t g_btn_last_change_ms = 0;    // kiedy zmienił się stan
+static uint32_t g_btn_last_repeat_ms = 0;    // kiedy był ostatni „repeat”
+
+
 __ALIGN_END uint8_t pinkyLeft[776] = {
 0x42,0x4d,0x08,0x03,0x00,0x00,0x00,0x00,0x00,0x00,0x36,0x00,0x00,0x00,0x28,0x00,
 0x00,0x00,0x13,0x00,0x00,0x00,0x13,0x00,0x00,0x00,0x01,0x00,0x10,0x00,0x00,0x00,
