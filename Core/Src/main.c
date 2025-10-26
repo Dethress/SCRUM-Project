@@ -58,6 +58,12 @@ static Dir     g_btn_last = DIR_NONE;        // ostatni stabilny kierunek
 static uint32_t g_btn_last_change_ms = 0;    // kiedy zmieniÅ‚ siÄ™ stan
 static uint32_t g_btn_last_repeat_ms = 0;    // kiedy byÅ‚ ostatni â€žrepeatâ€
 
+// --- A1: FPS / timing (bez rysowania) ---
+#define FRAME_MS_TARGET   33U            // ~30 Hz
+static volatile uint32_t g_frame_ms = 0; // ostatni czas klatki [ms]
+static volatile uint32_t g_fps10    = 0; // FPS*10 (np. 298 => 29.8 FPS)
+static uint32_t pinky_timer_ms      = 0; // akumulator do ruchu Pinky
+
 
 __ALIGN_END uint8_t pinkyLeft[776] = {
 0x42,0x4d,0x08,0x03,0x00,0x00,0x00,0x00,0x00,0x00,0x36,0x00,0x00,0x00,0x28,0x00,
@@ -731,7 +737,7 @@ static void HandleInput(uint32_t now_ms) {
 	JOYState_TypeDef js = BSP_JOY_GetState();
 	Dir d = MapJoyToDir(js);
 
-	// Zmiana stanu? – debounce
+	// Zmiana stanu? ï¿½ debounce
 	if (d != g_btn_last) {
 		if ((now_ms - g_btn_last_change_ms) >= BTN_DEBOUNCE_MS) {
 			g_btn_last = d;
@@ -741,13 +747,13 @@ static void HandleInput(uint32_t now_ms) {
 				DoMove(d);                  // natychmiast pierwszy krok po stabilnej zmianie
 			}
 		}
-		return; // jeszcze nic wiêcej – czekamy a¿ siê ustabilizuje/odmierzamy delay
+		return; // jeszcze nic wiï¿½cej ï¿½ czekamy aï¿½ siï¿½ ustabilizuje/odmierzamy delay
 	}
 
-	// Trzymanie – auto-repeat
+	// Trzymanie ï¿½ auto-repeat
 	if (d != DIR_NONE) {
 		if (g_btn_last_repeat_ms == 0) {
-			// pierwszy repeat po opóŸnieniu
+			// pierwszy repeat po opï¿½nieniu
 			if ((now_ms - g_btn_last_change_ms) >= BTN_REPEAT_DELAY_MS) {
 				DoMove(d);
 				g_btn_last_repeat_ms = now_ms;
@@ -780,7 +786,7 @@ void gameOver(void) {
 #if 0
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_PIN) {
 	if (GPIO_PIN == IOE_IT_PIN) {
-		JoyState = BSP_JOY_GetState();   // <— DODAJ TO
+		JoyState = BSP_JOY_GetState();   // <ï¿½ DODAJ TO
 		switch (JoyState) {
 		case JOY_DOWN:  moveDown();  break;
 		case JOY_UP:    moveUp();    break;
