@@ -290,44 +290,37 @@ int main(void) {
 	/* Infinite loop */
 	/* USER CODE BEGIN WHILE */
 	gameSetup();
-	while (1) {
-		/* Get the Joystick State */
-		/*
-		JoyState = BSP_JOY_GetState();
+		while (1) {
+	  // --- start klatki ---
+	  uint32_t frame_start = HAL_GetTick();
 
-		switch(JoyState) {
-		case JOY_UP:
-			// moveUp();
-			break;
-		case JOY_DOWN:
-			// moveDown();
-			break;
-		case JOY_LEFT:
-			// moveLeft();
-			break;
-		case JOY_RIGHT:
-			// moveRight();
-			break;
-		default:
-			break;
-		}
-		*/
-		HAL_Delay(500);
-		movePinky();
+	  // 1) Wejście (polling + debounce + auto-repeat)
+	  HandleInput(frame_start);
 
-		// Check for game over condition:
-		if (pointsCounter == NROW*NCOL) {
-			// Pac-Man wins:
-			gameStatus = 2;
-			gameOver();
-		}
-		if ((pinkyPos.row == pacmanPos.row) && (pinkyPos.col == pacmanPos.col)) {
-			// Pinky wins:
-			gameStatus = 0;
-			gameOver();
-		}
-	/* USER CODE END WHILE */
-	/* USER CODE BEGIN 3 */
+	  // 2) Domknięcie do ~33 ms
+	  uint32_t now_ms = HAL_GetTick();
+	  uint32_t elapsed = now_ms - frame_start;
+	  if (elapsed < FRAME_MS_TARGET) {
+	    HAL_Delay(FRAME_MS_TARGET - elapsed);
+	  }
+
+	  // 3) Rzeczywisty dt i FPS*10 (bez rysowania / logów)
+	  g_frame_ms = HAL_GetTick() - frame_start;
+	  g_fps10    = (g_frame_ms > 0U) ? (10000U / g_frame_ms) : 0U;
+
+	  // 4) Harmonogram ducha: co ~500 ms
+	  if (firstFrame) { firstFrame = 0; pinky_timer_ms = 500U; }
+	  pinky_timer_ms += g_frame_ms;
+	  while (pinky_timer_ms >= 500U) {
+	    movePinky();
+	    pinky_timer_ms -= 500U;
+	  }
+
+	  // 5) Warunki końca gry
+	  if (pointsCounter == NROW*NCOL) { gameStatus = 2; gameOver(); }
+	  if ((pinkyPos.row == pacmanPos.row) && (pinkyPos.col == pacmanPos.col)) {
+	    gameStatus = 0; gameOver();
+	  }
 	}
 	/* USER CODE END 3 */
 }
