@@ -71,6 +71,30 @@ uint8_t livesLeft = 3;         // liczba zyc (serduszek)
 uint8_t paused = 0;            // 1 = pauza
 uint8_t gameOverState = 0;     // 1 = po zakonczeniu gry
 
+// Obsluga przycisku SEL (pauza/restart) z debounce i long-press:
+static uint8_t  sel_pressed = 0;
+static uint32_t sel_change_ms = 0;
+static uint32_t sel_down_start_ms = 0;
+
+// D1: liczba zjadalnych pol (bez scian):
+uint16_t totalDots = 0;
+
+/* D1: stala mapa 12x16: 1 = sciana, 0 = wolne */
+static const uint8_t walls[NROW][NCOL] = {
+  {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+  {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+  {0,1,1,0,0,0,0,1,0,0,0,0,1,1,0,0},
+  {0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0},
+  {0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0},
+  {0,0,0,1,1,1,1,1,0,1,1,1,1,0,0,0},
+  {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+  {0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0},
+  {0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0},
+  {0,1,1,0,0,0,0,1,0,0,0,0,1,1,0,0},
+  {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+  {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+};
+
 __ALIGN_END uint8_t pinkyLeft[776] = {
 0x42,0x4d,0x08,0x03,0x00,0x00,0x00,0x00,0x00,0x00,0x36,0x00,0x00,0x00,0x28,0x00,
 0x00,0x00,0x13,0x00,0x00,0x00,0x13,0x00,0x00,0x00,0x01,0x00,0x10,0x00,0x00,0x00,
