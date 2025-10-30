@@ -16,13 +16,14 @@
   *
   ******************************************************************************
   */
-/* USER CODE END Header */
-/* Includes ------------------------------------------------------------------*/
+  /* USER CODE END Header */
+  /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include <stdlib.h>
+#include <stdio.h>
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -170,13 +171,13 @@ __ALIGN_END uint8_t pinkyRight[776] = {
 // 0: field is empty;
 // 1: Pac-Man;
 // 2: Pinky;
-uint8_t gameBoard[NROW][NCOL] = {{0}};
+uint8_t gameBoard[NROW][NCOL] = { {0} };
 // visitedFields keeps track of fields visited by Pac-Man and facilitates counting points:
 // 0: field not visited yet;
 // 1: field visited already;
-uint8_t visitedFields[NROW][NCOL] = {{0}};
-Position pacmanPos = {0, 0};
-Position pinkyPos = {NROW-1, NCOL-1};
+uint8_t visitedFields[NROW][NCOL] = { {0} };
+Position pacmanPos = { 0, 0 };
+Position pinkyPos = { NROW - 1, NCOL - 1 };
 JOYState_TypeDef JoyState = JOY_NONE;
 uint16_t pointsCounter = 0;
 // gameStatus represents status of current game:
@@ -277,8 +278,8 @@ int main(void) {
 
 	// Configure ADC1:
 	if (myAdc1Init() != HAL_OK) {
-		BSP_LCD_DisplayStringAt(0, 145, (uint8_t *)"ERROR", CENTER_MODE);
-		BSP_LCD_DisplayStringAt(0, 160, (uint8_t *)"ADC1 cannot be initialized", CENTER_MODE);
+		BSP_LCD_DisplayStringAt(0, 145, (uint8_t*)"ERROR", CENTER_MODE);
+		BSP_LCD_DisplayStringAt(0, 160, (uint8_t*)"ADC1 cannot be initialized", CENTER_MODE);
 		Error_Handler();
 	}
 
@@ -339,14 +340,14 @@ int main(void) {
   * @retval None
   */
 void SystemClock_Config(void) {
-	RCC_OscInitTypeDef RCC_OscInitStruct = {0};
-	RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
-	RCC_PeriphCLKInitTypeDef PeriphClkInit = {0};
+	RCC_OscInitTypeDef RCC_OscInitStruct = { 0 };
+	RCC_ClkInitTypeDef RCC_ClkInitStruct = { 0 };
+	RCC_PeriphCLKInitTypeDef PeriphClkInit = { 0 };
 
 	/** Initializes the RCC Oscillators according to the specified parameters
 	* in the RCC_OscInitTypeDef structure.
 	*/
-	RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSE|RCC_OSCILLATORTYPE_LSE;
+	RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSE | RCC_OSCILLATORTYPE_LSE;
 	RCC_OscInitStruct.HSEState = RCC_HSE_ON;
 	RCC_OscInitStruct.HSEPredivValue = RCC_HSE_PREDIV_DIV5;
 	RCC_OscInitStruct.LSEState = RCC_LSE_ON;
@@ -363,23 +364,23 @@ void SystemClock_Config(void) {
 	}
 	/** Initializes the CPU, AHB and APB buses clocks
 	*/
-	RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
-							  |RCC_CLOCKTYPE_PCLK1|RCC_CLOCKTYPE_PCLK2;
+	RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK | RCC_CLOCKTYPE_SYSCLK
+		| RCC_CLOCKTYPE_PCLK1 | RCC_CLOCKTYPE_PCLK2;
 	RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
 	RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
 	RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV2;
 	RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV1;
 
 	if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_2) != HAL_OK) {
-	Error_Handler();
+		Error_Handler();
 	}
-	PeriphClkInit.PeriphClockSelection = RCC_PERIPHCLK_RTC|RCC_PERIPHCLK_ADC
-							  |RCC_PERIPHCLK_USB;
+	PeriphClkInit.PeriphClockSelection = RCC_PERIPHCLK_RTC | RCC_PERIPHCLK_ADC
+		| RCC_PERIPHCLK_USB;
 	PeriphClkInit.RTCClockSelection = RCC_RTCCLKSOURCE_LSE;
 	PeriphClkInit.AdcClockSelection = RCC_ADCPCLK2_DIV6;
 	PeriphClkInit.UsbClockSelection = RCC_USBCLKSOURCE_PLL_DIV3;
 	if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInit) != HAL_OK) {
-	Error_Handler();
+		Error_Handler();
 	}
 	// HAL_RCC_MCOConfig(RCC_MCO, RCC_MCO1SOURCE_HSE, RCC_MCODIV_1);
 	// __HAL_RCC_PLLI2S_ENABLE();
@@ -827,12 +828,11 @@ void Error_Handler(void) {
   * @param  line: assert_param error line source number
   * @retval None
   */
-void assert_failed(uint8_t *file, uint32_t line)
+void assert_failed(uint8_t* file, uint32_t line)
 {
-  /* USER CODE BEGIN 6 */
-  /* User can add his own implementation to report the file name and line number,
-     ex: printf("Wrong parameters value: file %s on line %d\r\n", file, line) */
-  /* USER CODE END 6 */
+	/* USER CODE BEGIN 6 */
+	/* User can add his own implementation to report the file name and line number,
+	   ex: printf("Wrong parameters value: file %s on line %d\r\n", file, line) */
+	   /* USER CODE END 6 */
 }
 #endif /* USE_FULL_ASSERT */
-
