@@ -205,6 +205,12 @@ void myDrawPixel(uint16_t, uint16_t, uint16_t);
 void myDrawFullRectangle(uint16_t, uint16_t, uint16_t, uint16_t, uint16_t);
 void myDrawFullCircle(uint16_t, uint16_t, uint16_t, uint16_t);
 void gameOver(void);
+void DrawHeart(uint16_t x, uint16_t y, uint16_t color);
+void DrawHUD (void);
+void quickRestart(void);
+void showPauseBannerInHUD(void);
+void clearPauseBannerInHUD(void);
+void loseLifeAndRespawn(void); 
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
