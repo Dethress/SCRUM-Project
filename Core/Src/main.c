@@ -347,11 +347,15 @@ int main(void) {
 	  }
 
 	  // 5) Warunki konca gry
-	  if (pointsCounter == NROW*NCOL) { gameStatus = 2; gameOver(); }
+	  if (pointsCounter >= totalDots) { gameStatus = 2; gameOver(); }
 	  if ((pinkyPos.row == pacmanPos.row) && (pinkyPos.col == pacmanPos.col)) {
-	    gameStatus = 0; gameOver();
+	    loseLifeAndRespawn();
 	  }
+
+	  // 6) HUD odswiezaj co klatke (rowniez w pauzie/po GAME OVER)
+	  DrawHUD();
 	}
+
 
 	/* USER CODE END WHILE */
 
