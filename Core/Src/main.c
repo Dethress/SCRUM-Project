@@ -16,13 +16,14 @@
   *
   ******************************************************************************
   */
-/* USER CODE END Header */
-/* Includes ------------------------------------------------------------------*/
+  /* USER CODE END Header */
+  /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include <stdlib.h>
+#include <stdio.h>
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -46,6 +47,30 @@ typedef struct {
 
 /* Private variables ---------------------------------------------------------*/
 /* USER CODE BEGIN PV */
+
+// --- A3: Wejscie z debounce + auto-repeat (polling) ---
+typedef enum { DIR_NONE = 0, DIR_UP, DIR_DOWN, DIR_LEFT, DIR_RIGHT } Dir;
+
+#define BTN_DEBOUNCE_MS       20U    // filtr drgań styków
+#define BTN_REPEAT_DELAY_MS  160U    // po tyle ms pierwszy powtórzony krok
+#define BTN_REPEAT_MS         80U    // odstęp kolejnych kroków przy trzymaniu
+
+static Dir     g_btn_last = DIR_NONE;        // ostatni stabilny kierunek
+static uint32_t g_btn_last_change_ms = 0;    // kiedy zmienił się stan
+static uint32_t g_btn_last_repeat_ms = 0;    // kiedy był ostatni „repeat”
+static uint32_t g_btn_first_repeat_ms = 0;
+
+// --- A1: FPS / timing (bez rysowania) ---
+#define FRAME_MS_TARGET   33U            // ~30 Hz
+static volatile uint32_t g_frame_ms = 0; // ostatni czas klatki [ms]
+static volatile uint32_t g_fps10 = 0; // FPS*10 (np. 298 => 29.8 FPS)
+static uint32_t pinky_timer_ms = 0; // akumulator do ruchu Pinky
+
+/* === B1/B2/D1 nowe zmienne gry i HUD === */
+uint8_t livesLeft = 3;         // liczba zyc (serduszek)
+uint8_t paused = 0;            // 1 = pauza
+uint8_t gameOverState = 0;     // 1 = po zakonczeniu gry
+
 __ALIGN_END uint8_t pinkyLeft[776] = {
 0x42,0x4d,0x08,0x03,0x00,0x00,0x00,0x00,0x00,0x00,0x36,0x00,0x00,0x00,0x28,0x00,
 0x00,0x00,0x13,0x00,0x00,0x00,0x13,0x00,0x00,0x00,0x01,0x00,0x10,0x00,0x00,0x00,
@@ -152,13 +177,13 @@ __ALIGN_END uint8_t pinkyRight[776] = {
 // 0: field is empty;
 // 1: Pac-Man;
 // 2: Pinky;
-uint8_t gameBoard[NROW][NCOL] = {{0}};
+uint8_t gameBoard[NROW][NCOL] = { {0} };
 // visitedFields keeps track of fields visited by Pac-Man and facilitates counting points:
 // 0: field not visited yet;
 // 1: field visited already;
-uint8_t visitedFields[NROW][NCOL] = {{0}};
-Position pacmanPos = {0, 0};
-Position pinkyPos = {NROW-1, NCOL-1};
+uint8_t visitedFields[NROW][NCOL] = { {0} };
+Position pacmanPos = { 0, 0 };
+Position pinkyPos = { NROW - 1, NCOL - 1 };
 JOYState_TypeDef JoyState = JOY_NONE;
 uint16_t pointsCounter = 0;
 // gameStatus represents status of current game:
@@ -170,6 +195,9 @@ uint8_t gameStatus = 1;
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
+static inline void DoMove(Dir d);
+static void HandleInput(uint32_t now_ms);
+
 
 /* USER CODE BEGIN PFP */
 void myRedLedInit(void);
@@ -247,17 +275,17 @@ int main(void) {
 		Error_Handler();
 	}
 	*/
-	// Configure joystick to use interrupts:
-	if (BSP_JOY_Init(JOY_MODE_EXTI) != IO_OK) {
-		BSP_LCD_DisplayStringAt(0, 145, (uint8_t *)"ERROR", CENTER_MODE);
-		BSP_LCD_DisplayStringAt(0, 160, (uint8_t *)"Joystick cannot be initialized", CENTER_MODE);
+	// Configure joystick in polling mode (prosciej dla debounce/repeat):
+	if (BSP_JOY_Init(JOY_MODE_GPIO) != IO_OK) {
+		BSP_LCD_DisplayStringAt(0, 145, (uint8_t*)"ERROR", CENTER_MODE);
+		BSP_LCD_DisplayStringAt(0, 160, (uint8_t*)"Joystick cannot be initialized", CENTER_MODE);
 		Error_Handler();
 	}
 
 	// Configure ADC1:
 	if (myAdc1Init() != HAL_OK) {
-		BSP_LCD_DisplayStringAt(0, 145, (uint8_t *)"ERROR", CENTER_MODE);
-		BSP_LCD_DisplayStringAt(0, 160, (uint8_t *)"ADC1 cannot be initialized", CENTER_MODE);
+		BSP_LCD_DisplayStringAt(0, 145, (uint8_t*)"ERROR", CENTER_MODE);
+		BSP_LCD_DisplayStringAt(0, 160, (uint8_t*)"ADC1 cannot be initialized", CENTER_MODE);
 		Error_Handler();
 	}
 
@@ -269,62 +297,63 @@ int main(void) {
 
 	/* Infinite loop */
 	/* USER CODE BEGIN WHILE */
+	/* USER CODE BEGIN WHILE */
 	gameSetup();
+
+	uint8_t firstFrame = 1;
+
 	while (1) {
-		/* Get the Joystick State */
-		/*
-		JoyState = BSP_JOY_GetState();
+		// --- start klatki ---
+		uint32_t frame_start = HAL_GetTick();
 
-		switch(JoyState) {
-		case JOY_UP:
-			// moveUp();
-			break;
-		case JOY_DOWN:
-			// moveDown();
-			break;
-		case JOY_LEFT:
-			// moveLeft();
-			break;
-		case JOY_RIGHT:
-			// moveRight();
-			break;
-		default:
-			break;
-		}
-		*/
-		HAL_Delay(500);
-		movePinky();
+		// 1) Wejscie (polling + debounce + auto-repeat)
+		HandleInput(frame_start);
 
-		// Check for game over condition:
-		if (pointsCounter == NROW*NCOL) {
-			// Pac-Man wins:
-			gameStatus = 2;
-			gameOver();
+		// 2) Domkniecie do ~33 ms
+		uint32_t now_ms = HAL_GetTick();
+		uint32_t elapsed = now_ms - frame_start;
+		if (elapsed < FRAME_MS_TARGET) {
+			HAL_Delay(FRAME_MS_TARGET - elapsed);
 		}
+
+		// 3) Rzeczywisty dt i FPS*10 (bez rysowania / logów)
+		g_frame_ms = HAL_GetTick() - frame_start;
+		g_fps10 = (g_frame_ms > 0U) ? (10000U / g_frame_ms) : 0U;
+
+		// 4) Harmonogram ducha: co ~500 ms
+		if (firstFrame) { firstFrame = 0; pinky_timer_ms = 500U; }
+		pinky_timer_ms += g_frame_ms;
+		while (pinky_timer_ms >= 500U) {
+			movePinky();
+			pinky_timer_ms -= 500U;
+		}
+
+		// 5) Warunki konca gry
+		if (pointsCounter == NROW * NCOL) { gameStatus = 2; gameOver(); }
 		if ((pinkyPos.row == pacmanPos.row) && (pinkyPos.col == pacmanPos.col)) {
-			// Pinky wins:
-			gameStatus = 0;
-			gameOver();
+			gameStatus = 0; gameOver();
 		}
-	/* USER CODE END WHILE */
-	/* USER CODE BEGIN 3 */
 	}
-	/* USER CODE END 3 */
+
+	/* USER CODE END WHILE */
+
+	/* USER CODE BEGIN 3 */
 }
+/* USER CODE END 3 */
 
 /**
   * @brief System Clock Configuration
   * @retval None
   */
 void SystemClock_Config(void) {
-	RCC_OscInitTypeDef RCC_OscInitStruct = {0};
-	RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
-	RCC_PeriphCLKInitTypeDef PeriphClkInit = {0};
+	RCC_OscInitTypeDef RCC_OscInitStruct = { 0 };
+	RCC_ClkInitTypeDef RCC_ClkInitStruct = { 0 };
+	RCC_PeriphCLKInitTypeDef PeriphClkInit = { 0 };
 
 	/** Initializes the RCC Oscillators according to the specified parameters
 	* in the RCC_OscInitTypeDef structure.
 	*/
-	RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSE|RCC_OSCILLATORTYPE_LSE;
+	RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSE | RCC_OSCILLATORTYPE_LSE;
 	RCC_OscInitStruct.HSEState = RCC_HSE_ON;
 	RCC_OscInitStruct.HSEPredivValue = RCC_HSE_PREDIV_DIV5;
 	RCC_OscInitStruct.LSEState = RCC_LSE_ON;
@@ -341,23 +370,23 @@ void SystemClock_Config(void) {
 	}
 	/** Initializes the CPU, AHB and APB buses clocks
 	*/
-	RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
-							  |RCC_CLOCKTYPE_PCLK1|RCC_CLOCKTYPE_PCLK2;
+	RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK | RCC_CLOCKTYPE_SYSCLK
+		| RCC_CLOCKTYPE_PCLK1 | RCC_CLOCKTYPE_PCLK2;
 	RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
 	RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
 	RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV2;
 	RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV1;
 
 	if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_2) != HAL_OK) {
-	Error_Handler();
+		Error_Handler();
 	}
-	PeriphClkInit.PeriphClockSelection = RCC_PERIPHCLK_RTC|RCC_PERIPHCLK_ADC
-							  |RCC_PERIPHCLK_USB;
+	PeriphClkInit.PeriphClockSelection = RCC_PERIPHCLK_RTC | RCC_PERIPHCLK_ADC
+		| RCC_PERIPHCLK_USB;
 	PeriphClkInit.RTCClockSelection = RCC_RTCCLKSOURCE_LSE;
 	PeriphClkInit.AdcClockSelection = RCC_ADCPCLK2_DIV6;
 	PeriphClkInit.UsbClockSelection = RCC_USBCLKSOURCE_PLL_DIV3;
 	if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInit) != HAL_OK) {
-	Error_Handler();
+		Error_Handler();
 	}
 	// HAL_RCC_MCOConfig(RCC_MCO, RCC_MCO1SOURCE_HSE, RCC_MCODIV_1);
 	// __HAL_RCC_PLLI2S_ENABLE();
@@ -452,6 +481,7 @@ uint32_t getSeedValue(void) {
 	return ret;
 }
 
+
 // Function responsible for game setup:
 void gameSetup(void) {
 	uint16_t i = 0;
@@ -522,6 +552,7 @@ void moveDown(void) {
 	myDrawFullCircle(SQ_SIZE * pacmanPos.col + SQ_SIZE / 2, SQ_SIZE * pacmanPos.row + SQ_SIZE / 2, SQ_SIZE / 2 - 1,
 		LCD_COLOR_YELLOW);
 }
+
 
 void moveUp(void) {
 	// Erase Pac-Man from its current position:
@@ -596,6 +627,7 @@ void moveRight(void) {
 	myDrawFullCircle(SQ_SIZE * pacmanPos.col + SQ_SIZE / 2, SQ_SIZE * pacmanPos.row + SQ_SIZE / 2, SQ_SIZE / 2 - 1,
 		LCD_COLOR_YELLOW);
 }
+
 
 void movePinky(void) {
 	int8_t distanceRows = (int8_t)pinkyPos.row - (int8_t)pacmanPos.row;
@@ -717,7 +749,7 @@ static void HandleInput(uint32_t now_ms) {
 	JOYState_TypeDef js = BSP_JOY_GetState();
 	Dir d = MapJoyToDir(js);
 
-	// Zmiana stanu? � debounce
+	// Zmiana stanu debounce
 	if (d != g_btn_last) {
 		if ((now_ms - g_btn_last_change_ms) >= BTN_DEBOUNCE_MS) {
 			g_btn_last = d;
@@ -727,13 +759,13 @@ static void HandleInput(uint32_t now_ms) {
 				DoMove(d);                  // natychmiast pierwszy krok po stabilnej zmianie
 			}
 		}
-		return; // jeszcze nic wi�cej � czekamy a� si� ustabilizuje/odmierzamy delay
+		return; // jeszcze nic więcej – czekamy aż się ustabilizuje/odmierzamy delay
 	}
 
-	// Trzymanie � auto-repeat
+	// Trzymanie auto-repeat
 	if (d != DIR_NONE) {
 		if (g_btn_last_repeat_ms == 0) {
-			// pierwszy repeat po op�nieniu
+			// pierwszy repeat po opóźnieniu
 			if ((now_ms - g_btn_last_change_ms) >= BTN_REPEAT_DELAY_MS) {
 				DoMove(d);
 				g_btn_last_repeat_ms = now_ms;
@@ -766,7 +798,7 @@ void gameOver(void) {
 #if 0
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_PIN) {
 	if (GPIO_PIN == IOE_IT_PIN) {
-		JoyState = BSP_JOY_GetState();   // <� DODAJ TO
+		JoyState = BSP_JOY_GetState();   // DODAJ TO
 		switch (JoyState) {
 		case JOY_DOWN:  moveDown();  break;
 		case JOY_UP:    moveUp();    break;
@@ -802,12 +834,11 @@ void Error_Handler(void) {
   * @param  line: assert_param error line source number
   * @retval None
   */
-void assert_failed(uint8_t *file, uint32_t line)
+void assert_failed(uint8_t* file, uint32_t line)
 {
-  /* USER CODE BEGIN 6 */
-  /* User can add his own implementation to report the file name and line number,
-     ex: printf("Wrong parameters value: file %s on line %d\r\n", file, line) */
-  /* USER CODE END 6 */
+	/* USER CODE BEGIN 6 */
+	/* User can add his own implementation to report the file name and line number,
+	   ex: printf("Wrong parameters value: file %s on line %d\r\n", file, line) */
+	   /* USER CODE END 6 */
 }
 #endif /* USE_FULL_ASSERT */
-
