@@ -51,25 +51,19 @@ typedef struct {
 // --- A3: Wejscie z debounce + auto-repeat (polling) ---
 typedef enum { DIR_NONE = 0, DIR_UP, DIR_DOWN, DIR_LEFT, DIR_RIGHT } Dir;
 
-#define BTN_DEBOUNCE_MS       20U    // filtr drgań styków
-#define BTN_REPEAT_DELAY_MS  160U    // po tyle ms pierwszy powtórzony krok
-#define BTN_REPEAT_MS         80U    // odstęp kolejnych kroków przy trzymaniu
+#define BTN_DEBOUNCE_MS       20U    // filtr drgaĹ„ stykĂłw
+#define BTN_REPEAT_DELAY_MS  160U    // po tyle ms pierwszy powtĂłrzony krok
+#define BTN_REPEAT_MS         80U    // odstÄ™p kolejnych krokĂłw przy trzymaniu
 
 static Dir     g_btn_last = DIR_NONE;        // ostatni stabilny kierunek
-static uint32_t g_btn_last_change_ms = 0;    // kiedy zmienił się stan
-static uint32_t g_btn_last_repeat_ms = 0;    // kiedy był ostatni „repeat”
-static uint32_t g_btn_first_repeat_ms = 0;
+static uint32_t g_btn_last_change_ms = 0;    // kiedy zmieniĹ‚ siÄ™ stan
+static uint32_t g_btn_last_repeat_ms = 0;    // kiedy byĹ‚ ostatni â€žrepeatâ€ť
 
 // --- A1: FPS / timing (bez rysowania) ---
 #define FRAME_MS_TARGET   33U            // ~30 Hz
 static volatile uint32_t g_frame_ms = 0; // ostatni czas klatki [ms]
 static volatile uint32_t g_fps10 = 0; // FPS*10 (np. 298 => 29.8 FPS)
 static uint32_t pinky_timer_ms = 0; // akumulator do ruchu Pinky
-
-/* === B1/B2/D1 nowe zmienne gry i HUD === */
-uint8_t livesLeft = 3;         // liczba zyc (serduszek)
-uint8_t paused = 0;            // 1 = pauza
-uint8_t gameOverState = 0;     // 1 = po zakonczeniu gry
 
 // Obsluga przycisku SEL (pauza/restart) z debounce i long-press:
 static uint8_t  sel_pressed = 0;
@@ -238,6 +232,12 @@ void myDrawPixel(uint16_t, uint16_t, uint16_t);
 void myDrawFullRectangle(uint16_t, uint16_t, uint16_t, uint16_t, uint16_t);
 void myDrawFullCircle(uint16_t, uint16_t, uint16_t, uint16_t);
 void gameOver(void);
+void DrawHeart(uint16_t x, uint16_t y, uint16_t color);
+void DrawHUD(void);
+void quickRestart(void);
+void showPauseBannerInHUD(void);
+void clearPauseBannerInHUD(void);
+void loseLifeAndRespawn(void);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -323,6 +323,7 @@ int main(void) {
 	/* USER CODE BEGIN WHILE */
 	/* USER CODE BEGIN WHILE */
 	gameSetup();
+	drawHUD();
 
 	uint8_t firstFrame = 1;
 
@@ -340,24 +341,30 @@ int main(void) {
 			HAL_Delay(FRAME_MS_TARGET - elapsed);
 		}
 
-		// 3) Rzeczywisty dt i FPS*10 (bez rysowania / logów)
+		// 3) Rzeczywisty dt i FPS*10 (bez rysowania / logĂłw)
 		g_frame_ms = HAL_GetTick() - frame_start;
 		g_fps10 = (g_frame_ms > 0U) ? (10000U / g_frame_ms) : 0U;
 
 		// 4) Harmonogram ducha: co ~500 ms
-		if (firstFrame) { firstFrame = 0; pinky_timer_ms = 500U; }
-		pinky_timer_ms += g_frame_ms;
-		while (pinky_timer_ms >= 500U) {
-			movePinky();
-			pinky_timer_ms -= 500U;
+		if (!paused && !gameOverState) {
+			if (firstFrame) { firstFrame = 0; pinky_timer_ms = 500U; }
+			pinky_timer_ms += g_frame_ms;
+			while (pinky_timer_ms >= 500U) {
+				movePinky();
+				pinky_timer_ms -= 500U;
+			}
 		}
 
 		// 5) Warunki konca gry
-		if (pointsCounter == NROW * NCOL) { gameStatus = 2; gameOver(); }
+		if (pointsCounter >= totalDots) { gameStatus = 2; gameOver(); }
 		if ((pinkyPos.row == pacmanPos.row) && (pinkyPos.col == pacmanPos.col)) {
-			gameStatus = 0; gameOver();
+			loseLifeAndRespawn();
 		}
+
+		// 6) HUD odswiezaj co klatke (rowniez w pauzie/po GAME OVER)
+		DrawHUD();
 	}
+
 
 	/* USER CODE END WHILE */
 
@@ -783,13 +790,13 @@ static void HandleInput(uint32_t now_ms) {
 				DoMove(d);                  // natychmiast pierwszy krok po stabilnej zmianie
 			}
 		}
-		return; // jeszcze nic więcej – czekamy aż się ustabilizuje/odmierzamy delay
+		return; // jeszcze nic wiÄ™cej â€“ czekamy aĹĽ siÄ™ ustabilizuje/odmierzamy delay
 	}
 
 	// Trzymanie auto-repeat
 	if (d != DIR_NONE) {
 		if (g_btn_last_repeat_ms == 0) {
-			// pierwszy repeat po opóźnieniu
+			// pierwszy repeat po opĂłĹşnieniu
 			if ((now_ms - g_btn_last_change_ms) >= BTN_REPEAT_DELAY_MS) {
 				DoMove(d);
 				g_btn_last_repeat_ms = now_ms;
