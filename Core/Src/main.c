@@ -323,7 +323,8 @@ int main(void) {
 	/* USER CODE BEGIN WHILE */
 	/* USER CODE BEGIN WHILE */
 	gameSetup();
-
+	drawHUD();
+	
 	uint8_t firstFrame = 1;
 
 	while (1) {
@@ -345,12 +346,14 @@ int main(void) {
 	  g_fps10    = (g_frame_ms > 0U) ? (10000U / g_frame_ms) : 0U;
 
 	  // 4) Harmonogram ducha: co ~500 ms
-	  if (firstFrame) { firstFrame = 0; pinky_timer_ms = 500U; }
-	  pinky_timer_ms += g_frame_ms;
-	  while (pinky_timer_ms >= 500U) {
-	    movePinky();
-	    pinky_timer_ms -= 500U;
-	  }
+		if(!paused && !gameOverState) {
+		  if (firstFrame) { firstFrame = 0; pinky_timer_ms = 500U; }
+		  pinky_timer_ms += g_frame_ms;
+		  while (pinky_timer_ms >= 500U) {
+		    movePinky();
+		    pinky_timer_ms -= 500U;
+		  }
+		}
 
 	  // 5) Warunki konca gry
 	  if (pointsCounter >= totalDots) { gameStatus = 2; gameOver(); }
