@@ -530,6 +530,21 @@ void gameSetup(void) {
 	for (uint16_t i = 0; i < 240; i += SQ_SIZE) BSP_LCD_DrawHLine(0, i, 320);
 	for (uint16_t i = 0; i < 320; i += SQ_SIZE) BSP_LCD_DrawVLine(i, 0, 240);
 
+	// 3) Wyzeruj stan i policz kropki
+	totalDots = 0;
+	for (uint8_t r = 0; r < NROW; ++r) {
+		for (uint8_t c = 0; c < NCOL; ++c) {
+			gameBoard[r][c] = 0;
+			visitedFields[r][c] = 0;
+
+			if (!walls[r][c]) {
+				// kropka w srodku kafla
+				myDrawPixel(c * SQ_SIZE + SQ_SIZE / 2, r * SQ_SIZE + SQ_SIZE / 2, LCD_COLOR_WHITE);
+				totalDots++;
+			}
+		}
+	}
+
 	// Clear the screen:
 	BSP_LCD_Clear(LCD_COLOR_BLACK);
 
