@@ -48,16 +48,17 @@ typedef struct {
 /* Private variables ---------------------------------------------------------*/
 /* USER CODE BEGIN PV */
 
-// --- A3: Wejscie z debounce + auto-repeat (polling) ---
+// --- A3: Wejście z debounce + auto-repeat (polling) ---
 typedef enum { DIR_NONE = 0, DIR_UP, DIR_DOWN, DIR_LEFT, DIR_RIGHT } Dir;
 
-#define BTN_DEBOUNCE_MS       20U    // filtr drgaĹ„ stykĂłw
-#define BTN_REPEAT_DELAY_MS  160U    // po tyle ms pierwszy powtĂłrzony krok
-#define BTN_REPEAT_MS         80U    // odstÄ™p kolejnych krokĂłw przy trzymaniu
+#define BTN_DEBOUNCE_MS       20U    // filtr drgań styków
+#define BTN_REPEAT_DELAY_MS  160U    // po tyle ms pierwszy powtórzony krok
+#define BTN_REPEAT_MS         80U    // odstęp kolejnych kroków przy trzymaniu
 
 static Dir     g_btn_last = DIR_NONE;        // ostatni stabilny kierunek
-static uint32_t g_btn_last_change_ms = 0;    // kiedy zmieniĹ‚ siÄ™ stan
-static uint32_t g_btn_last_repeat_ms = 0;    // kiedy byĹ‚ ostatni â€žrepeatâ€ť
+static uint32_t g_btn_last_change_ms = 0;    // kiedy zmienił się stan
+static uint32_t g_btn_last_repeat_ms = 0;    // kiedy był ostatni „repeat”
+static uint32_t g_btn_first_repeat_ms = 0;    // <<< DODAJ TO
 
 // --- A1: FPS / timing (bez rysowania) ---
 #define FRAME_MS_TARGET   33U            // ~30 Hz
@@ -65,15 +66,20 @@ static volatile uint32_t g_frame_ms = 0; // ostatni czas klatki [ms]
 static volatile uint32_t g_fps10 = 0; // FPS*10 (np. 298 => 29.8 FPS)
 static uint32_t pinky_timer_ms = 0; // akumulator do ruchu Pinky
 
-// Obsluga przycisku SEL (pauza/restart) z debounce i long-press:
+/* === B1/B2/D1 – nowe zmienne gry i HUD === */
+uint8_t livesLeft = 3;         // liczba żyć (serduszek)
+uint8_t paused = 0;            // 1 = pauza
+uint8_t gameOverState = 0;     // 1 = po zakończeniu gry
+
+// Obsługa przycisku SEL (pauza/restart) z debounce i long-press:
 static uint8_t  sel_pressed = 0;
 static uint32_t sel_change_ms = 0;
 static uint32_t sel_down_start_ms = 0;
 
-// D1: liczba zjadalnych pol (bez scian):
+// D1: liczba „jadalnych” pól (bez ścian):
 uint16_t totalDots = 0;
 
-/* D1: stala mapa 12x16: 1 = sciana, 0 = wolne */
+/* D1: stała mapa 12x16: 1 = ściana, 0 = wolne */
 static const uint8_t walls[NROW][NCOL] = {
   {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
   {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
@@ -88,6 +94,8 @@ static const uint8_t walls[NROW][NCOL] = {
   {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
   {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
 };
+
+
 
 __ALIGN_END uint8_t pinkyLeft[776] = {
 0x42,0x4d,0x08,0x03,0x00,0x00,0x00,0x00,0x00,0x00,0x36,0x00,0x00,0x00,0x28,0x00,
@@ -237,6 +245,7 @@ void DrawHUD(void);
 void quickRestart(void);
 void showPauseBannerInHUD(void);
 void clearPauseBannerInHUD(void);
+void drawWalls(void);
 void loseLifeAndRespawn(void);
 /* USER CODE END PFP */
 
@@ -299,7 +308,7 @@ int main(void) {
 		Error_Handler();
 	}
 	*/
-	// Configure joystick in polling mode (prosciej dla debounce/repeat):
+	// Configure joystick in polling mode (prościej dla debounce/repeat):
 	if (BSP_JOY_Init(JOY_MODE_GPIO) != IO_OK) {
 		BSP_LCD_DisplayStringAt(0, 145, (uint8_t*)"ERROR", CENTER_MODE);
 		BSP_LCD_DisplayStringAt(0, 160, (uint8_t*)"Joystick cannot be initialized", CENTER_MODE);
@@ -323,7 +332,7 @@ int main(void) {
 	/* USER CODE BEGIN WHILE */
 	/* USER CODE BEGIN WHILE */
 	gameSetup();
-	drawHUD();
+	DrawHUD();
 
 	uint8_t firstFrame = 1;
 
@@ -331,21 +340,21 @@ int main(void) {
 		// --- start klatki ---
 		uint32_t frame_start = HAL_GetTick();
 
-		// 1) Wejscie (polling + debounce + auto-repeat)
+		// 1) Wejście (polling + debounce + auto-repeat)
 		HandleInput(frame_start);
 
-		// 2) Domkniecie do ~33 ms
+		// 2) Domknięcie do ~33 ms
 		uint32_t now_ms = HAL_GetTick();
 		uint32_t elapsed = now_ms - frame_start;
 		if (elapsed < FRAME_MS_TARGET) {
 			HAL_Delay(FRAME_MS_TARGET - elapsed);
 		}
 
-		// 3) Rzeczywisty dt i FPS*10 (bez rysowania / logĂłw)
+		// 3) Rzeczywisty dt i FPS*10 (bez rysowania / logów)
 		g_frame_ms = HAL_GetTick() - frame_start;
 		g_fps10 = (g_frame_ms > 0U) ? (10000U / g_frame_ms) : 0U;
 
-		// 4) Harmonogram ducha: co ~500 ms
+		/// 4) Harmonogram ducha: co ~500 ms (tylko gdy nie pauzujemy)
 		if (!paused && !gameOverState) {
 			if (firstFrame) { firstFrame = 0; pinky_timer_ms = 500U; }
 			pinky_timer_ms += g_frame_ms;
@@ -353,25 +362,23 @@ int main(void) {
 				movePinky();
 				pinky_timer_ms -= 500U;
 			}
+
+			// 5) Warunki końca gry
+			if (pointsCounter >= totalDots) { gameStatus = 2; gameOver(); }
+			if ((pinkyPos.row == pacmanPos.row) && (pinkyPos.col == pacmanPos.col)) {
+				loseLifeAndRespawn();
+			}
 		}
 
-		// 5) Warunki konca gry
-		if (pointsCounter >= totalDots) { gameStatus = 2; gameOver(); }
-		if ((pinkyPos.row == pacmanPos.row) && (pinkyPos.col == pacmanPos.col)) {
-			loseLifeAndRespawn();
-		}
-
-		// 6) HUD odswiezaj co klatke (rowniez w pauzie/po GAME OVER)
+		// 6) HUD – odświeżaj co klatkę (również w pauzie/po GAME OVER)
 		DrawHUD();
+
+		/* USER CODE END WHILE */
+
+		/* USER CODE BEGIN 3 */
 	}
-
-
-	/* USER CODE END WHILE */
-
-	/* USER CODE BEGIN 3 */
+	/* USER CODE END 3 */
 }
-/* USER CODE END 3 */
-
 /**
   * @brief System Clock Configuration
   * @retval None
@@ -515,8 +522,13 @@ uint32_t getSeedValue(void) {
 
 // Function responsible for game setup:
 void gameSetup(void) {
-	uint16_t i = 0;
-	uint16_t j = 0;
+	// 1) Ekran
+	BSP_LCD_Clear(LCD_COLOR_BLACK);
+	BSP_LCD_SetTextColor(LCD_COLOR_ORANGE);
+
+	// 2) Krata
+	for (uint16_t i = 0; i < 240; i += SQ_SIZE) BSP_LCD_DrawHLine(0, i, 320);
+	for (uint16_t i = 0; i < 320; i += SQ_SIZE) BSP_LCD_DrawVLine(i, 0, 240);
 
 	// Clear the screen:
 	BSP_LCD_Clear(LCD_COLOR_BLACK);
