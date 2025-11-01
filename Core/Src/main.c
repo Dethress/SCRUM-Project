@@ -550,6 +550,10 @@ void moveDown(void) {
 }
 
 void moveUp(void) {
+	uint8_t r2 = (pacmanPos.row == 0) ? (NROW-1) : (pacmanPos.row -1 );
+	uint8_t c2 = pacmanPos.col;
+	if (walls[r2][c2]) return; //sciana - brak ruchu 
+
 	// Erase Pac-Man from its current position:
 	myDrawFullRectangle(pacmanPos.col * SQ_SIZE + 1, pacmanPos.row * SQ_SIZE + 1,
 		SQ_SIZE - 1, SQ_SIZE - 1, LCD_COLOR_BLACK);
