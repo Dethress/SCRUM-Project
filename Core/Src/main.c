@@ -626,27 +626,22 @@ void moveLeft(void) {
 
 
 void moveRight(void) {
-	// Erase Pac-Man from its current position:
-	myDrawFullRectangle(pacmanPos.col*SQ_SIZE+1, pacmanPos.row*SQ_SIZE+1,
-			   SQ_SIZE-1, SQ_SIZE-1, LCD_COLOR_BLACK);
+  uint8_t r2 = pacmanPos.row;
+  uint8_t c2 = (pacmanPos.col == NCOL-1) ? 0 : (pacmanPos.col + 1);
+  if (walls[r2][c2]) return;
 
-	// Move Pac-Man to the right:
-	gameBoard[pacmanPos.row][pacmanPos.col] = 0;
-	if (pacmanPos.col == NCOL-1)
-		pacmanPos.col = 0;
-	else
-		pacmanPos.col++;
-	gameBoard[pacmanPos.row][pacmanPos.col] = 1;
+  myDrawFullRectangle(pacmanPos.col*SQ_SIZE+1, pacmanPos.row*SQ_SIZE+1, SQ_SIZE-1, SQ_SIZE-1, LCD_COLOR_BLACK);
+  gameBoard[pacmanPos.row][pacmanPos.col] = 0;
 
-	// Update the number of points, if necessary:
-	if (visitedFields[pacmanPos.row][pacmanPos.col] == 0) {
-		pointsCounter++;
-		visitedFields[pacmanPos.row][pacmanPos.col] = 1;
-	}
+  pacmanPos.col = c2;
+  gameBoard[pacmanPos.row][pacmanPos.col] = 1;
 
-	// Draw Pac-Man in its new position:
-	myDrawFullCircle(SQ_SIZE*pacmanPos.col+SQ_SIZE/2, SQ_SIZE*pacmanPos.row+SQ_SIZE/2, SQ_SIZE/2 - 1,
-				 LCD_COLOR_YELLOW);
+  if (visitedFields[pacmanPos.row][pacmanPos.col] == 0) {
+    pointsCounter++;
+    visitedFields[pacmanPos.row][pacmanPos.col] = 1;
+  }
+
+  myDrawFullCircle(SQ_SIZE*pacmanPos.col+SQ_SIZE/2, SQ_SIZE*pacmanPos.row+SQ_SIZE/2, SQ_SIZE/2 - 1, LCD_COLOR_YELLOW);
 }
 
 
