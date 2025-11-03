@@ -533,78 +533,51 @@ void gameSetup(void) {
 			visitedFields[r][c] = 0;
 
 			if (!walls[r][c]) {
-				// kropka w srodku kafla
+				// kropka w środku kafla
 				myDrawPixel(c * SQ_SIZE + SQ_SIZE / 2, r * SQ_SIZE + SQ_SIZE / 2, LCD_COLOR_WHITE);
 				totalDots++;
 			}
 		}
 	}
 
-	// Clear the screen:
-	BSP_LCD_Clear(LCD_COLOR_BLACK);
+	// 4) Ściany
+	drawWalls();
 
-	// Set text color to orange:
-	BSP_LCD_SetTextColor(LCD_COLOR_ORANGE);
-
-	// Draw the grid:
-	for (i = 0;i < 240;i += SQ_SIZE)
-		BSP_LCD_DrawHLine(0, i, 320);
-	for (i = 0;i < 320;i += SQ_SIZE)
-		BSP_LCD_DrawVLine(i, 0, 240);
-
-	// Draw points:
-	for (i = 0;i < 320;i += SQ_SIZE) {
-		for (j = 0;j < 240;j += SQ_SIZE) {
-			myDrawPixel(i + SQ_SIZE/2, j + SQ_SIZE/2, LCD_COLOR_WHITE);
-		}
-	}
-
-	// Draw initial Pac-Man position:
-	pacmanPos.row = rand()%NROW;
-	pacmanPos.col = rand()%NCOL;
+	// 5) Losowy start Pac-Mana i Pinky – tylko wolne pola i różne pozycje
+	do { pacmanPos.row = rand() % NROW; pacmanPos.col = rand() % NCOL; } while (walls[pacmanPos.row][pacmanPos.col]);
 	gameBoard[pacmanPos.row][pacmanPos.col] = 1;
-	visitedFields[pacmanPos.row][pacmanPos.col] = 1;
-	pointsCounter++;
+	visitedFields[pacmanPos.row][pacmanPos.col] = 1; // zjedzona kropka startowa
+	pointsCounter = 1;
+	myDrawFullCircle(SQ_SIZE * pacmanPos.col + SQ_SIZE / 2, SQ_SIZE * pacmanPos.row + SQ_SIZE / 2, SQ_SIZE / 2 - 1, LCD_COLOR_YELLOW);
 
-	// Draw Pac-Man:
-	myDrawFullCircle(SQ_SIZE*pacmanPos.col+SQ_SIZE/2, SQ_SIZE*pacmanPos.row+SQ_SIZE/2, SQ_SIZE/2 - 1,
-				 LCD_COLOR_YELLOW);
-
-	// Draw initial Pinky position:
-	do {
-		pinkyPos.row = rand()%NROW;
-		pinkyPos.col = rand()%NCOL;
-	}
-	while (pinkyPos.row == pacmanPos.row && pinkyPos.col == pacmanPos.col);
+	do { pinkyPos.row = rand() % NROW; pinkyPos.col = rand() % NCOL; } while (walls[pinkyPos.row][pinkyPos.col] || (pinkyPos.row == pacmanPos.row && pinkyPos.col == pacmanPos.col));
 	gameBoard[pinkyPos.row][pinkyPos.col] = 2;
+	BSP_LCD_DrawBitmap(pinkyPos.col * SQ_SIZE + 1, pinkyPos.row * SQ_SIZE + 1, pinkyLeft);
 
-	// Draw Pinky:
-	BSP_LCD_DrawBitmap(pinkyPos.col*SQ_SIZE+1, pinkyPos.row*SQ_SIZE+1, pinkyLeft);
+	// 6) HUD
+	DrawHUD();
 }
 
 
-void moveDown(void) {
-	// Erase Pac-Man from its current position:
-	myDrawFullRectangle(pacmanPos.col*SQ_SIZE+1, pacmanPos.row*SQ_SIZE+1,
-			   SQ_SIZE-1, SQ_SIZE-1, LCD_COLOR_BLACK);
 
-	// Move Pac-Man down:
+void moveUp(void) {
+	uint8_t r2 = (pacmanPos.row == 0) ? (NROW - 1) : (pacmanPos.row - 1);
+	uint8_t c2 = pacmanPos.col;
+	if (walls[r2][c2]) return; // ściana → brak ruchu
+
+	// wymazanie starego pola
+	myDrawFullRectangle(pacmanPos.col * SQ_SIZE + 1, pacmanPos.row * SQ_SIZE + 1, SQ_SIZE - 1, SQ_SIZE - 1, LCD_COLOR_BLACK);
 	gameBoard[pacmanPos.row][pacmanPos.col] = 0;
-	if (pacmanPos.row == NROW-1)
-		pacmanPos.row = 0;
-	else
-		pacmanPos.row++;
+
+	pacmanPos.row = r2;
 	gameBoard[pacmanPos.row][pacmanPos.col] = 1;
 
-	// Update the number of points, if necessary:
 	if (visitedFields[pacmanPos.row][pacmanPos.col] == 0) {
 		pointsCounter++;
 		visitedFields[pacmanPos.row][pacmanPos.col] = 1;
 	}
 
-	// Draw Pac-Man in its new position:
-	myDrawFullCircle(SQ_SIZE*pacmanPos.col+SQ_SIZE/2, SQ_SIZE*pacmanPos.row+SQ_SIZE/2, SQ_SIZE/2 - 1,
-				 LCD_COLOR_YELLOW);
+	myDrawFullCircle(SQ_SIZE * pacmanPos.col + SQ_SIZE / 2, SQ_SIZE * pacmanPos.row + SQ_SIZE / 2, SQ_SIZE / 2 - 1, LCD_COLOR_YELLOW);
 }
 
 
