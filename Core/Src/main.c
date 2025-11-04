@@ -599,96 +599,73 @@ void moveDown(void) {
 	myDrawFullCircle(SQ_SIZE * pacmanPos.col + SQ_SIZE / 2, SQ_SIZE * pacmanPos.row + SQ_SIZE / 2, SQ_SIZE / 2 - 1, LCD_COLOR_YELLOW);
 }
 
-
 void moveLeft(void) {
 	uint8_t r2 = pacmanPos.row;
-	uint8_t c2 = (pacmanPos.col == 0) ? (NCOL-1) : (pacmanPos.col - 1);
+	uint8_t c2 = (pacmanPos.col == 0) ? (NCOL - 1) : (pacmanPos.col - 1);
 	if (walls[r2][c2]) return;
-	
-	myDrawFullRectangle(pacmanPos.col*SQ_SIZE+1, pacmanPos.row*SQ_SIZE+1, SQ_SIZE-1, SQ_SIZE-1, LCD_COLOR_BLACK);
+
+	myDrawFullRectangle(pacmanPos.col * SQ_SIZE + 1, pacmanPos.row * SQ_SIZE + 1, SQ_SIZE - 1, SQ_SIZE - 1, LCD_COLOR_BLACK);
 	gameBoard[pacmanPos.row][pacmanPos.col] = 0;
-	
+
 	pacmanPos.col = c2;
 	gameBoard[pacmanPos.row][pacmanPos.col] = 1;
-	
+
 	if (visitedFields[pacmanPos.row][pacmanPos.col] == 0) {
 		pointsCounter++;
 		visitedFields[pacmanPos.row][pacmanPos.col] = 1;
 	}
 
-	myDrawFullCircle(SQ_SIZE*pacmanPos.col+SQ_SIZE/2, SQ_SIZE*pacmanPos.row+SQ_SIZE/2, SQ_SIZE/2 - 1, LCD_COLOR_YELLOW);
+	myDrawFullCircle(SQ_SIZE * pacmanPos.col + SQ_SIZE / 2, SQ_SIZE * pacmanPos.row + SQ_SIZE / 2, SQ_SIZE / 2 - 1, LCD_COLOR_YELLOW);
 }
 
-
 void moveRight(void) {
-  uint8_t r2 = pacmanPos.row;
-  uint8_t c2 = (pacmanPos.col == NCOL-1) ? 0 : (pacmanPos.col + 1);
-  if (walls[r2][c2]) return;
+	uint8_t r2 = pacmanPos.row;
+	uint8_t c2 = (pacmanPos.col == NCOL - 1) ? 0 : (pacmanPos.col + 1);
+	if (walls[r2][c2]) return;
 
-  myDrawFullRectangle(pacmanPos.col*SQ_SIZE+1, pacmanPos.row*SQ_SIZE+1, SQ_SIZE-1, SQ_SIZE-1, LCD_COLOR_BLACK);
-  gameBoard[pacmanPos.row][pacmanPos.col] = 0;
+	myDrawFullRectangle(pacmanPos.col * SQ_SIZE + 1, pacmanPos.row * SQ_SIZE + 1, SQ_SIZE - 1, SQ_SIZE - 1, LCD_COLOR_BLACK);
+	gameBoard[pacmanPos.row][pacmanPos.col] = 0;
 
-  pacmanPos.col = c2;
-  gameBoard[pacmanPos.row][pacmanPos.col] = 1;
+	pacmanPos.col = c2;
+	gameBoard[pacmanPos.row][pacmanPos.col] = 1;
 
-  if (visitedFields[pacmanPos.row][pacmanPos.col] == 0) {
-    pointsCounter++;
-    visitedFields[pacmanPos.row][pacmanPos.col] = 1;
-  }
+	if (visitedFields[pacmanPos.row][pacmanPos.col] == 0) {
+		pointsCounter++;
+		visitedFields[pacmanPos.row][pacmanPos.col] = 1;
+	}
 
-  myDrawFullCircle(SQ_SIZE*pacmanPos.col+SQ_SIZE/2, SQ_SIZE*pacmanPos.row+SQ_SIZE/2, SQ_SIZE/2 - 1, LCD_COLOR_YELLOW);
+	myDrawFullCircle(SQ_SIZE * pacmanPos.col + SQ_SIZE / 2, SQ_SIZE * pacmanPos.row + SQ_SIZE / 2, SQ_SIZE / 2 - 1, LCD_COLOR_YELLOW);
 }
 
 
 void movePinky(void) {
-	int8_t distanceRows = (int8_t)pinkyPos.row - (int8_t)pacmanPos.row;
-	int8_t distanceCols = (int8_t)pinkyPos.col - (int8_t)pacmanPos.col;
-
-	// Erase Pinky at its current position:
-	myDrawFullRectangle(pinkyPos.col*SQ_SIZE+1, pinkyPos.row*SQ_SIZE+1,
-			   SQ_SIZE-1, SQ_SIZE-1, LCD_COLOR_BLACK);
-	gameBoard[pinkyPos.row][pinkyPos.col] = 0;
-
-	// Redraw the point, if necessary:
-	if (visitedFields[pinkyPos.row][pinkyPos.col] == 0) {
-		myDrawPixel(SQ_SIZE*pinkyPos.col+1 + SQ_SIZE/2,	SQ_SIZE*pinkyPos.row+1 + SQ_SIZE/2,
-					LCD_COLOR_WHITE);
-	}
-
 	int16_t dr = (int16_t)pacmanPos.row - (int16_t)pinkyPos.row;
 	int16_t dc = (int16_t)pacmanPos.col - (int16_t)pinkyPos.col;
 
-	if (abs(distanceRows) < abs(distanceCols)) {
-		// Move Pinky along columns:
-		if (pinkyPos.col < pacmanPos.col) {
-			// Pinky to the left, so moves right:
-			pinkyPos.col++;
-			BSP_LCD_DrawBitmap(pinkyPos.col*SQ_SIZE+1, pinkyPos.row*SQ_SIZE+1,
-					pinkyRight);
-		}
-		else {
-			// Pinky to the right, so moves left:
-			pinkyPos.col--;
-			BSP_LCD_DrawBitmap(pinkyPos.col*SQ_SIZE+1, pinkyPos.row*SQ_SIZE+1,
-					pinkyLeft);
-		}
-	}
-	else {
-		// Move Pinky along rows:
-		if (pinkyPos.row < pacmanPos.row) {
-			// Pinky is up, so moves down:
-			pinkyPos.row++;
-		}
-		else {
-			// Pinky is down, so moves up:
-			pinkyPos.row--;
-		}
-		myDrawFullCircle(SQ_SIZE*pinkyPos.col+SQ_SIZE/2, SQ_SIZE*pinkyPos.row+SQ_SIZE/2, SQ_SIZE/2 - 1,
-					 0xFCD9);
-	}
+	uint8_t r1 = pinkyPos.row, c1 = pinkyPos.col;
 
-	gameBoard[pinkyPos.row][pinkyPos.col] = 2;
-}
+	// kandydat ruchu po WIERSZU
+	uint8_t cand_row_r = r1, cand_row_c = c1;
+	if (dr < 0)      cand_row_r = (r1 == 0) ? (NROW - 1) : (r1 - 1);
+	else if (dr > 0) cand_row_r = (r1 == NROW - 1) ? 0 : (r1 + 1);
+
+	// kandydat ruchu po KOLUMNIE
+	uint8_t cand_col_r = r1, cand_col_c = c1;
+	if (dc < 0)      cand_col_c = (c1 == 0) ? (NCOL - 1) : (c1 - 1);
+	else if (dc > 0) cand_col_c = (c1 == NCOL - 1) ? 0 : (c1 + 1);
+
+	// który kierunek próbujemy najpierw?
+	uint8_t tryRowFirst = (abs((int)dr) >= abs((int)dc));
+
+	// wybór pierwszego kandydata
+	uint8_t nr = tryRowFirst ? cand_row_r : cand_col_r;
+	uint8_t nc = tryRowFirst ? cand_row_c : cand_col_c;
+
+	// jeśli pierwszy kandydat to ściana – spróbuj drugiego
+	if (walls[nr][nc]) {
+		nr = tryRowFirst ? cand_col_r : cand_row_r;
+		nc = tryRowFirst ? cand_col_c : cand_row_c;
+	}
 
 
 /**
