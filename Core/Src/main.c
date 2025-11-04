@@ -725,6 +725,18 @@ void myDrawFullRectangle(uint16_t Xpos, uint16_t Ypos, uint16_t Width, uint16_t 
 	BSP_LCD_SetTextColor(backup_color);
 }
 
+/* B1: rysowanie serduszka i hud*/
+
+//male serduszko 16x16 tworzone z 2 kolek
+
+void DrawHeart(uint16_t x, uint16_t y, uint16_t color){
+//dwa poswiaty 
+myDrawFullCircle(x+5, y+5, 5, color);
+myDrawFullCircle(x+11, y+5, 5, color);
+myDrawFullRectangle(x+2, y+8, 12, 6, color);
+myDrawFullRectangle(x+5, y+12, 6, 5, color);
+myDrawFullRectangle(x+7, y+16, 2, 3, color);
+}
 
 // Function drawing a full circle:
 void myDrawFullCircle(uint16_t centerX, uint16_t centerY, uint16_t radius, uint16_t color) {
