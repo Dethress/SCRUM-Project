@@ -48,28 +48,22 @@ typedef struct {
 /* Private variables ---------------------------------------------------------*/
 /* USER CODE BEGIN PV */
 
-// --- A3: Wejście z debounce + auto-repeat (polling) ---
-typedef enum { DIR_NONE = 0, DIR_UP, DIR_DOWN, DIR_LEFT, DIR_RIGHT } Dir;
+// --- A3: Wejscie z debounce + auto-repeat (polling) ---
+typedef enum { DIR_NONE=0, DIR_UP, DIR_DOWN, DIR_LEFT, DIR_RIGHT } Dir;
 
-#define BTN_DEBOUNCE_MS       20U    // filtr drgań styków
-#define BTN_REPEAT_DELAY_MS  160U    // po tyle ms pierwszy powtórzony krok
-#define BTN_REPEAT_MS         80U    // odstęp kolejnych kroków przy trzymaniu
+#define BTN_DEBOUNCE_MS       20U    // filtr drgaĹ„ stykĂłw
+#define BTN_REPEAT_DELAY_MS  160U    // po tyle ms pierwszy powtĂłrzony krok
+#define BTN_REPEAT_MS         80U    // odstÄ™p kolejnych krokĂłw przy trzymaniu
 
 static Dir     g_btn_last = DIR_NONE;        // ostatni stabilny kierunek
-static uint32_t g_btn_last_change_ms = 0;    // kiedy zmienił się stan
-static uint32_t g_btn_last_repeat_ms = 0;    // kiedy był ostatni „repeat”
-static uint32_t g_btn_first_repeat_ms = 0;    // <<< DODAJ TO
+static uint32_t g_btn_last_change_ms = 0;    // kiedy zmieniĹ‚ siÄ™ stan
+static uint32_t g_btn_last_repeat_ms = 0;    // kiedy byĹ‚ ostatni â€žrepeatâ€ť
 
 // --- A1: FPS / timing (bez rysowania) ---
 #define FRAME_MS_TARGET   33U            // ~30 Hz
 static volatile uint32_t g_frame_ms = 0; // ostatni czas klatki [ms]
-static volatile uint32_t g_fps10 = 0; // FPS*10 (np. 298 => 29.8 FPS)
-static uint32_t pinky_timer_ms = 0; // akumulator do ruchu Pinky
-
-/* === B1/B2/D1 – nowe zmienne gry i HUD === */
-uint8_t livesLeft = 3;         // liczba żyć (serduszek)
-uint8_t paused = 0;            // 1 = pauza
-uint8_t gameOverState = 0;     // 1 = po zakończeniu gry
+static volatile uint32_t g_fps10    = 0; // FPS*10 (np. 298 => 29.8 FPS)
+static uint32_t pinky_timer_ms      = 0; // akumulator do ruchu Pinky
 
 // Obsługa przycisku SEL (pauza/restart) z debounce i long-press:
 static uint8_t  sel_pressed = 0;
@@ -241,12 +235,11 @@ void myDrawFullRectangle(uint16_t, uint16_t, uint16_t, uint16_t, uint16_t);
 void myDrawFullCircle(uint16_t, uint16_t, uint16_t, uint16_t);
 void gameOver(void);
 void DrawHeart(uint16_t x, uint16_t y, uint16_t color);
-void DrawHUD(void);
+void DrawHUD (void);
 void quickRestart(void);
 void showPauseBannerInHUD(void);
 void clearPauseBannerInHUD(void);
-void drawWalls(void);
-void loseLifeAndRespawn(void);
+void loseLifeAndRespawn(void); 
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -310,8 +303,8 @@ int main(void) {
 	*/
 	// Configure joystick in polling mode (prościej dla debounce/repeat):
 	if (BSP_JOY_Init(JOY_MODE_GPIO) != IO_OK) {
-		BSP_LCD_DisplayStringAt(0, 145, (uint8_t*)"ERROR", CENTER_MODE);
-		BSP_LCD_DisplayStringAt(0, 160, (uint8_t*)"Joystick cannot be initialized", CENTER_MODE);
+		BSP_LCD_DisplayStringAt(0, 145, (uint8_t *)"ERROR", CENTER_MODE);
+		BSP_LCD_DisplayStringAt(0, 160, (uint8_t *)"Joystick cannot be initialized", CENTER_MODE);
 		Error_Handler();
 	}
 
@@ -350,9 +343,11 @@ int main(void) {
 			HAL_Delay(FRAME_MS_TARGET - elapsed);
 		}
 
-		// 3) Rzeczywisty dt i FPS*10 (bez rysowania / logów)
-		g_frame_ms = HAL_GetTick() - frame_start;
-		g_fps10 = (g_frame_ms > 0U) ? (10000U / g_frame_ms) : 0U;
+	  // 5) Warunki konca gry
+	  if (pointsCounter >= totalDots) { gameStatus = 2; gameOver(); }
+	  if ((pinkyPos.row == pacmanPos.row) && (pinkyPos.col == pacmanPos.col)) {
+	    loseLifeAndRespawn();
+	  }
 
 		/// 4) Harmonogram ducha: co ~500 ms (tylko gdy nie pauzujemy)
 		if (!paused && !gameOverState) {
@@ -433,16 +428,16 @@ void SystemClock_Config(void) {
 /* USER CODE BEGIN 4 */
 // Function configuring RED LED using HAL:
 void myRedLedInit(void) {
-	GPIO_InitTypeDef gpioInit = { 0 };
+	GPIO_InitTypeDef gpioInit = {0};
 
 	/* Enable the GPIO_LED clock */
 	__HAL_RCC_GPIOD_CLK_ENABLE();
 
 	/* Configure the GPIO_LED pin */
-	gpioInit.Pin = GPIO_PIN_3;
-	gpioInit.Mode = GPIO_MODE_OUTPUT_PP;
-	gpioInit.Pull = GPIO_NOPULL;
-	gpioInit.Speed = GPIO_SPEED_FREQ_LOW;
+	gpioInit.Pin    = GPIO_PIN_3;
+	gpioInit.Mode   = GPIO_MODE_OUTPUT_PP;
+	gpioInit.Pull   = GPIO_NOPULL;
+	gpioInit.Speed  = GPIO_SPEED_FREQ_LOW;
 
 	HAL_GPIO_Init(GPIOD, &gpioInit);
 	// HAL_GPIO_WritePin(GPIOD, GPIO_PIN_3, 0);
@@ -467,15 +462,15 @@ void myLowLevelRedLedInit(void) {
 	GPIOD->CRL &= ~(1 << 12);
 	// Configure PD3 as output push/pull:
 	// Set bits 15 and 14 to '00':
-	GPIOD->CRL &= ~0b00000000000000001100000000000000;
+	GPIOD->CRL &=~0b00000000000000001100000000000000;
 }
 
 
 // Function initializing ADC1:
 int8_t myAdc1Init(void) {
 	uint8_t ret = HAL_OK;
-	ADC_HandleTypeDef hadc1 = { 0 };
-	ADC_ChannelConfTypeDef sConfig = { 0 };
+	ADC_HandleTypeDef hadc1 = {0};
+	ADC_ChannelConfTypeDef sConfig = {0};
 
 	/** Common configuration */
 	hadc1.Instance = ADC1;
@@ -514,7 +509,7 @@ uint32_t getSeedValue(void) {
 	while ((ADC1->SR & 0x00000002) == 0);
 	ret = (uint32_t)ADC1->DR;
 	// Clear the STRT bit:
-	ADC1->SR &= ~0x00000010;
+	ADC1->SR &=~0x00000010;
 
 	return ret;
 }
@@ -694,7 +689,7 @@ void myDrawFullRectangle(uint16_t Xpos, uint16_t Ypos, uint16_t Width, uint16_t 
 	uint16_t backup_color = BSP_LCD_GetTextColor();
 	BSP_LCD_SetTextColor(color);
 
-	while (Height--) {
+	while(Height--) {
 		BSP_LCD_DrawHLine(Xpos, Ypos++, Width);
 	}
 
@@ -708,10 +703,10 @@ void myDrawFullCircle(uint16_t centerX, uint16_t centerY, uint16_t radius, uint1
 	uint16_t backup_color = BSP_LCD_GetTextColor();
 	BSP_LCD_SetTextColor(color);
 
-	for (i = (-1) * radius;i <= radius;i++) {
-		for (j = (-1) * radius;j <= radius;j++) {
-			if ((i * i + j * j) <= radius * radius) {
-				BSP_LCD_DrawVLine(centerX + i, centerY + j, (-2) * j);
+	for (i = (-1)*radius;i <= radius;i++) {
+		for (j = (-1)*radius;j <= radius;j++) {
+			if ((i*i + j*j) <= radius*radius) {
+				BSP_LCD_DrawVLine(centerX+i, centerY+j, (-2)*j);
 				break;
 			}
 		}
@@ -721,23 +716,23 @@ void myDrawFullCircle(uint16_t centerX, uint16_t centerY, uint16_t radius, uint1
 }
 
 static inline void DoMove(Dir d) {
-	switch (d) {
-	case DIR_UP:    moveUp();    break;
-	case DIR_DOWN:  moveDown();  break;
-	case DIR_LEFT:  moveLeft();  break;
-	case DIR_RIGHT: moveRight(); break;
-	default: break;
-	}
+  switch (d) {
+    case DIR_UP:    moveUp();    break;
+    case DIR_DOWN:  moveDown();  break;
+    case DIR_LEFT:  moveLeft();  break;
+    case DIR_RIGHT: moveRight(); break;
+    default: break;
+  }
 }
 
 static Dir MapJoyToDir(JOYState_TypeDef js) {
-	switch (js) {
-	case JOY_UP:    return DIR_UP;
-	case JOY_DOWN:  return DIR_DOWN;
-	case JOY_LEFT:  return DIR_LEFT;
-	case JOY_RIGHT: return DIR_RIGHT;
-	default:        return DIR_NONE;
-	}
+  switch (js) {
+    case JOY_UP:    return DIR_UP;
+    case JOY_DOWN:  return DIR_DOWN;
+    case JOY_LEFT:  return DIR_LEFT;
+    case JOY_RIGHT: return DIR_RIGHT;
+    default:        return DIR_NONE;
+  }
 }
 
 // Polling z debounce i auto-repeat
@@ -780,29 +775,29 @@ static void HandleInput(uint32_t now_ms) {
 
 void gameOver(void) {
 	if (gameStatus == 0) {
-		BSP_LCD_DisplayStringAt(0, 80, (uint8_t*)"Game over. You lost.", CENTER_MODE);
-		BSP_LCD_DisplayStringAt(0, 100, (uint8_t*)"Press \'Reset\' to play again.", CENTER_MODE);
-		while (1);
+		BSP_LCD_DisplayStringAt(0, 80, (uint8_t *)"Game over. You lost.", CENTER_MODE);
+		BSP_LCD_DisplayStringAt(0, 100, (uint8_t *)"Press \'Reset\' to play again.", CENTER_MODE);
+		while(1);
 	}
 	if (gameStatus == 2) {
-		BSP_LCD_DisplayStringAt(0, 80, (uint8_t*)"Congratulations. You won.", CENTER_MODE);
-		BSP_LCD_DisplayStringAt(0, 100, (uint8_t*)"Press \'Reset\' to play again.", CENTER_MODE);
-		while (1);
+		BSP_LCD_DisplayStringAt(0, 80, (uint8_t *)"Congratulations. You won.", CENTER_MODE);
+		BSP_LCD_DisplayStringAt(0, 100, (uint8_t *)"Press \'Reset\' to play again.", CENTER_MODE);
+		while(1);
 	}
 }
 
 #if 0
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_PIN) {
-	if (GPIO_PIN == IOE_IT_PIN) {
-		JoyState = BSP_JOY_GetState();   // DODAJ TO
-		switch (JoyState) {
-		case JOY_DOWN:  moveDown();  break;
-		case JOY_UP:    moveUp();    break;
-		case JOY_LEFT:  moveLeft();  break;
-		case JOY_RIGHT: moveRight(); break;
-		default: break;
-		}
-	}
+  if (GPIO_PIN == IOE_IT_PIN) {
+    JoyState = BSP_JOY_GetState();   // DODAJ TO
+    switch (JoyState) {
+      case JOY_DOWN:  moveDown();  break;
+      case JOY_UP:    moveUp();    break;
+      case JOY_LEFT:  moveLeft();  break;
+      case JOY_RIGHT: moveRight(); break;
+      default: break;
+    }
+  }
 }
 #endif
 
