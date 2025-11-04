@@ -754,6 +754,23 @@ void DrawHUD(void) {
     }
   }
 
+// Wynik
+  BSP_LCD_SetTextColor(LCD_COLOR_WHITE);
+  snprintf(buf, sizeof(buf), "SCORE: %u", (unsigned)pointsCounter);
+  BSP_LCD_DisplayStringAt(80, 4, (uint8_t*)buf, LEFT_MODE);
+}
+
+void drawWalls(void) {
+  for (uint8_t r = 0; r < NROW; ++r) {
+    for (uint8_t c = 0; c < NCOL; ++c) {
+      if (walls[r][c]) {
+        // Zamaluj kafelek na niebieski
+    	  myDrawFullRectangle(c*SQ_SIZE+1, r*SQ_SIZE+1, SQ_SIZE-1, SQ_SIZE-1, LCD_COLOR_BLUE);
+      }
+    }
+  }
+}
+
 // Function drawing a full circle:
 void myDrawFullCircle(uint16_t centerX, uint16_t centerY, uint16_t radius, uint16_t color) {
 	int16_t i, j;
