@@ -738,6 +738,22 @@ myDrawFullRectangle(x+5, y+12, 6, 5, color);
 myDrawFullRectangle(x+7, y+16, 2, 3, color);
 }
 
+// Pasek HUD w gornym rzedzie (wysokosc = SQ_SIZE-1)
+void DrawHUD(void) {
+  char buf[32];
+
+  // Czarny pasek na gorze (nie boj sie: rysujemy go co klatke, jest maly)
+  myDrawFullRectangle(0, 0, 320, SQ_SIZE-1, LCD_COLOR_BLACK);
+
+  // Serduszka po lewej (3 szt.)
+  for (uint8_t i = 0; i < 3; ++i) {
+    if (i < livesLeft) {
+      DrawHeart(2 + i*20, 2, LCD_COLOR_RED);        // Zywe serce
+    } else {
+      DrawHeart(2 + i*20, 2, LCD_COLOR_DARKGRAY);   // Puste serce
+    }
+  }
+
 // Function drawing a full circle:
 void myDrawFullCircle(uint16_t centerX, uint16_t centerY, uint16_t radius, uint16_t color) {
 	int16_t i, j;
