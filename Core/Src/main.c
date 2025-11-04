@@ -660,6 +660,9 @@ void movePinky(void) {
 					LCD_COLOR_WHITE);
 	}
 
+	int16_t dr = (int16_t)pacmanPos.row - (int16_t)pinkyPos.row;
+	int16_t dc = (int16_t)pacmanPos.col - (int16_t)pinkyPos.col;
+
 	if (abs(distanceRows) < abs(distanceCols)) {
 		// Move Pinky along columns:
 		if (pinkyPos.col < pacmanPos.col) {
