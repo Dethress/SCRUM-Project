@@ -667,6 +667,35 @@ void movePinky(void) {
 		nc = tryRowFirst ? cand_col_c : cand_row_c;
 	}
 
+	// jeśli też ściana albo brak zmiany — nie ruszaj się
+	if (walls[nr][nc] || (nr == r1 && nc == c1)) return;
+
+	// wyczyść stare miejsce Pinky
+	myDrawFullRectangle(pinkyPos.col * SQ_SIZE + 1, pinkyPos.row * SQ_SIZE + 1, SQ_SIZE - 1, SQ_SIZE - 1, LCD_COLOR_BLACK);
+	gameBoard[pinkyPos.row][pinkyPos.col] = 0;
+
+	// odtwórz kropkę, jeśli była i nie ma ściany
+	if (!walls[pinkyPos.row][pinkyPos.col] && visitedFields[pinkyPos.row][pinkyPos.col] == 0) {
+		myDrawPixel(SQ_SIZE * pinkyPos.col + SQ_SIZE / 2, SQ_SIZE * pinkyPos.row + SQ_SIZE / 2, LCD_COLOR_WHITE);
+	}
+
+	// przesuń Pinky
+	pinkyPos.row = nr;
+	pinkyPos.col = nc;
+	gameBoard[pinkyPos.row][pinkyPos.col] = 2;
+
+	// sprite lewo/prawo
+	if (nc > c1 || (c1 == NCOL - 1 && nc == 0)) {
+		BSP_LCD_DrawBitmap(pinkyPos.col * SQ_SIZE + 1, pinkyPos.row * SQ_SIZE + 1, pinkyRight);
+	}
+	else if (nc < c1 || (c1 == 0 && nc == NCOL - 1)) {
+		BSP_LCD_DrawBitmap(pinkyPos.col * SQ_SIZE + 1, pinkyPos.row * SQ_SIZE + 1, pinkyLeft);
+	}
+	else {
+		BSP_LCD_DrawBitmap(pinkyPos.col * SQ_SIZE + 1, pinkyPos.row * SQ_SIZE + 1, pinkyLeft);
+	}
+}
+
 
 /**
   * @brief  Draws a pixel on LCD.
