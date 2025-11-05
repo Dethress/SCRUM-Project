@@ -697,6 +697,7 @@ void movePinky(void) {
 }
 
 
+
 /**
   * @brief  Draws a pixel on LCD.
   * @param  posX: X position
@@ -788,6 +789,61 @@ void myDrawFullCircle(uint16_t centerX, uint16_t centerY, uint16_t radius, uint1
 
 	BSP_LCD_SetTextColor(backup_color);
 }
+
+/* === B1: Rysowanie serduszka i HUD === */
+
+// Małe serduszko ~16x16 tworzone z 2 kółek + prostokątów (proste i szybkie)
+void DrawHeart(uint16_t x, uint16_t y, uint16_t color) {
+	// Dwa „płatki”
+	myDrawFullCircle(x + 5, y + 5, 5, color);
+	myDrawFullCircle(x + 11, y + 5, 5, color);
+	// „Trójkąt” do dołu złożony z prostokątów
+	myDrawFullRectangle(x + 2, y + 8, 12, 6, color);
+	myDrawFullRectangle(x + 5, y + 12, 6, 5, color);
+	myDrawFullRectangle(x + 7, y + 16, 2, 3, color);
+}
+
+// Pasek HUD w górnym rzędzie (wysokość = SQ_SIZE-1)
+void DrawHUD(void) {
+	char buf[32];
+
+	// Czarny pasek na górze (nie bój się: rysujemy go co klatkę, jest mały)
+	myDrawFullRectangle(0, 0, 320, SQ_SIZE - 1, LCD_COLOR_BLACK);
+
+	// Serduszka po lewej (3 szt.)
+	for (uint8_t i = 0; i < 3; ++i) {
+		if (i < livesLeft) {
+			DrawHeart(2 + i * 20, 2, LCD_COLOR_RED);        // żywe serce
+		}
+		else {
+			DrawHeart(2 + i * 20, 2, LCD_COLOR_DARKGRAY);   // „puste” serce
+		}
+	}
+
+	// Wynik
+	BSP_LCD_SetTextColor(LCD_COLOR_WHITE);
+	snprintf(buf, sizeof(buf), "SCORE: %u", (unsigned)pointsCounter);
+	BSP_LCD_DisplayStringAt(80, 4, (uint8_t*)buf, LEFT_MODE);
+}
+
+void drawWalls(void) {
+	for (uint8_t r = 0; r < NROW; ++r) {
+		for (uint8_t c = 0; c < NCOL; ++c) {
+			if (walls[r][c]) {
+				// Zamaluj kafelek na „mur”
+				myDrawFullRectangle(c * SQ_SIZE + 1, r * SQ_SIZE + 1, SQ_SIZE - 1, SQ_SIZE - 1, LCD_COLOR_BLUE);
+			}
+		}
+	}
+}
+
+void quickRestart(void) {
+	// Zresetuj stan gry (bez inicjalizacji HAL/ekranów/joysticka)
+	pointsCounter = 0;
+	livesLeft = 3;
+	gameStatus = 1;
+	paused = 0;
+	gameOverState = 0;
 
 static inline void DoMove(Dir d) {
   switch (d) {
