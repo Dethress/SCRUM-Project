@@ -805,6 +805,14 @@ void quickRestart(void) {
 	paused = 0;
 	gameOverState = 0;
 
+	// Wyczyszczenie danych planszy
+	for (uint8_t r = 0; r < NROW; ++r) {
+		for (uint8_t c = 0; c < NCOL; ++c) {
+			gameBoard[r][c] = 0;
+			visitedFields[r][c] = 0;
+		}
+	}
+
 static inline void DoMove(Dir d) {
 	switch (d) {
 	case DIR_UP:    moveUp();    break;
