@@ -878,6 +878,15 @@ void loseLifeAndRespawn(void) {
   // respawn Pac-Mana na losowym wolnym polu, roznym od Pinky
   do { pacmanPos.row = rand()%NROW; pacmanPos.col = rand()%NCOL; }
   while (walls[pacmanPos.row][pacmanPos.col] || (pacmanPos.row==pinkyPos.row && pacmanPos.col==pinkyPos.col));
+
+  if (visitedFields[pacmanPos.row][pacmanPos.col] == 0) {
+    visitedFields[pacmanPos.row][pacmanPos.col] = 1;
+    pointsCounter++;
+  }
+  gameBoard[pacmanPos.row][pacmanPos.col] = 1;
+  myDrawFullCircle(SQ_SIZE*pacmanPos.col+SQ_SIZE/2, SQ_SIZE*pacmanPos.row+SQ_SIZE/2, SQ_SIZE/2 - 1, LCD_COLOR_YELLOW);
+
+  if (livesLeft == 0) { gameStatus = 0; gameOver(); }
 }
 
 static inline void DoMove(Dir d) {
