@@ -853,6 +853,24 @@ void quickRestart(void) {
 		}
 	}
 
+ // Od nowa ustawiamy plansze i postacie
+  gameSetup();
+
+  // HUD po restarcie
+  DrawHUD();
+
+  // Skasuj stan przycisku SEL (zeby nie przeniosl sie klik)
+  sel_pressed = 0;
+}
+
+void loseLifeAndRespawn(void) {
+  // wymaz Pac-Mana z biezacej pozycji
+  myDrawFullRectangle(pacmanPos.col*SQ_SIZE+1, pacmanPos.row*SQ_SIZE+1, SQ_SIZE-1, SQ_SIZE-1, LCD_COLOR_BLACK);
+  gameBoard[pacmanPos.row][pacmanPos.col] = 0;
+
+
+
+
 static inline void DoMove(Dir d) {
   switch (d) {
     case DIR_UP:    moveUp();    break;
