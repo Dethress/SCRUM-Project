@@ -853,41 +853,41 @@ void quickRestart(void) {
 		}
 	}
 
- // Od nowa ustawiamy plansze i postacie
-  gameSetup();
+	// Od nowa ustawiamy planszę i postacie
+	gameSetup();
 
-  // HUD po restarcie
-  DrawHUD();
+	// HUD po restarcie
+	DrawHUD();
 
-  // Skasuj stan przycisku SEL (zeby nie przeniosl sie klik)
-  sel_pressed = 0;
+	// Skasuj stan przycisku SEL (żeby nie „przeniósł się” klik)
+	sel_pressed = 0;
 }
 
 void loseLifeAndRespawn(void) {
-  // wymaz Pac-Mana z biezacej pozycji
-  myDrawFullRectangle(pacmanPos.col*SQ_SIZE+1, pacmanPos.row*SQ_SIZE+1, SQ_SIZE-1, SQ_SIZE-1, LCD_COLOR_BLACK);
-  gameBoard[pacmanPos.row][pacmanPos.col] = 0;
+	// wymaż Pac-Mana z bieżącej pozycji
+	myDrawFullRectangle(pacmanPos.col * SQ_SIZE + 1, pacmanPos.row * SQ_SIZE + 1, SQ_SIZE - 1, SQ_SIZE - 1, LCD_COLOR_BLACK);
+	gameBoard[pacmanPos.row][pacmanPos.col] = 0;
 
-  // odtworz kropke, jezli byla i to nie sciana
-  if (!walls[pacmanPos.row][pacmanPos.col] && visitedFields[pacmanPos.row][pacmanPos.col] == 0) {
-    myDrawPixel(SQ_SIZE*pacmanPos.col + SQ_SIZE/2, SQ_SIZE*pacmanPos.row + SQ_SIZE/2, LCD_COLOR_WHITE);
-  }
+	// odtwórz kropkę, jeśli była i to nie ściana
+	if (!walls[pacmanPos.row][pacmanPos.col] && visitedFields[pacmanPos.row][pacmanPos.col] == 0) {
+		myDrawPixel(SQ_SIZE * pacmanPos.col + SQ_SIZE / 2, SQ_SIZE * pacmanPos.row + SQ_SIZE / 2, LCD_COLOR_WHITE);
+	}
 
-  if (livesLeft > 0) livesLeft--;
+	if (livesLeft > 0) livesLeft--;
 
-  // respawn Pac-Mana na losowym wolnym polu, roznym od Pinky
-  do { pacmanPos.row = rand()%NROW; pacmanPos.col = rand()%NCOL; }
-  while (walls[pacmanPos.row][pacmanPos.col] || (pacmanPos.row==pinkyPos.row && pacmanPos.col==pinkyPos.col));
+	// respawn Pac-Mana na losowym wolnym polu, różnym od Pinky
+	do { pacmanPos.row = rand() % NROW; pacmanPos.col = rand() % NCOL; } while (walls[pacmanPos.row][pacmanPos.col] || (pacmanPos.row == pinkyPos.row && pacmanPos.col == pinkyPos.col));
 
-  if (visitedFields[pacmanPos.row][pacmanPos.col] == 0) {
-    visitedFields[pacmanPos.row][pacmanPos.col] = 1;
-    pointsCounter++;
-  }
-  gameBoard[pacmanPos.row][pacmanPos.col] = 1;
-  myDrawFullCircle(SQ_SIZE*pacmanPos.col+SQ_SIZE/2, SQ_SIZE*pacmanPos.row+SQ_SIZE/2, SQ_SIZE/2 - 1, LCD_COLOR_YELLOW);
+	if (visitedFields[pacmanPos.row][pacmanPos.col] == 0) {
+		visitedFields[pacmanPos.row][pacmanPos.col] = 1;
+		pointsCounter++;
+	}
+	gameBoard[pacmanPos.row][pacmanPos.col] = 1;
+	myDrawFullCircle(SQ_SIZE * pacmanPos.col + SQ_SIZE / 2, SQ_SIZE * pacmanPos.row + SQ_SIZE / 2, SQ_SIZE / 2 - 1, LCD_COLOR_YELLOW);
 
-  if (livesLeft == 0) { gameStatus = 0; gameOver(); }
+	if (livesLeft == 0) { gameStatus = 0; gameOver(); }
 }
+
 
 static inline void DoMove(Dir d) {
   switch (d) {
@@ -910,33 +910,85 @@ static Dir MapJoyToDir(JOYState_TypeDef js) {
 }
 
 // Polling z debounce i auto-repeat
+// Polling z debounce, auto-repeat i przyciskiem SEL (pauza/restart)
 static void HandleInput(uint32_t now_ms) {
 	JOYState_TypeDef js = BSP_JOY_GetState();
-	Dir d = MapJoyToDir(js);
 
-	// Zmiana stanu debounce
-	if (d != g_btn_last) {
-		if ((now_ms - g_btn_last_change_ms) >= BTN_DEBOUNCE_MS) {
-			g_btn_last = d;
-			g_btn_last_change_ms = now_ms;
-			g_btn_last_repeat_ms = 0;     // reset powtarzania
-			if (d != DIR_NONE) {
-				DoMove(d);                  // natychmiast pierwszy krok po stabilnej zmianie
+	// --- SEL: debounce + krótkie/długie naciśnięcie ---
+	if (js == JOY_SEL) {
+		if (!sel_pressed) {
+			if ((now_ms - sel_change_ms) >= BTN_DEBOUNCE_MS) {
+				sel_pressed = 1;
+				sel_down_start_ms = now_ms;
+				sel_change_ms = now_ms;
 			}
 		}
-		return; // jeszcze nic wiÄ™cej â€“ czekamy aĹĽ siÄ™ ustabilizuje/odmierzamy delay
+	}
+	else {
+		if (sel_pressed && (now_ms - sel_change_ms) >= BTN_DEBOUNCE_MS) {
+			uint32_t held = now_ms - sel_down_start_ms;
+			sel_pressed = 0;
+			sel_change_ms = now_ms;
+
+			if (held >= 1000U) {
+				// Długi przytrzym – szybki restart
+				quickRestart();
+				return;
+			}
+			else {
+				// Krótkie kliknięcie – pauza/wznowienie lub restart po GAME OVER
+				if (gameOverState) {
+					quickRestart();
+					return;
+				}
+				else {
+					paused ^= 1; // toggle
+				}
+			}
+		}
 	}
 
-	// Trzymanie auto-repeat
-	if (d != DIR_NONE) {
-		if (g_btn_last_repeat_ms == 0) {
-			// pierwszy repeat po opĂłĹşnieniu
-			if ((now_ms - g_btn_last_change_ms) >= BTN_REPEAT_DELAY_MS) {
-				DoMove(d);
-				g_btn_last_repeat_ms = now_ms;
-			}
+	// --- Kierunki: tylko gdy nie pauzujemy i nie po GAME OVER ---
+	if (paused || gameOverState) {
+		return;
+	}
+
+	Dir d = MapJoyToDir(js);
+
+	// Zmiana stanu? – debounce
+	if (d != g_btn_last) {
+		g_btn_last_change_ms = now_ms;
+		g_btn_last = d;
+		g_btn_first_repeat_ms = 0; // zresetuj first-repeat
+		if (d != DIR_NONE) {
+			g_btn_last_repeat_ms = 0; // wymuś pierwszy krok poniżej
 		}
-		else {
+		return;
+	}
+
+	// Stabilny stan przycisku
+	if (d == DIR_NONE) {
+		g_btn_first_repeat_ms = 0;
+		g_btn_last_repeat_ms = 0;
+		return;
+	}
+
+	// Pierwszy krok + first-repeat
+	if (g_btn_last_repeat_ms == 0) {
+		if ((now_ms - g_btn_last_change_ms) >= BTN_DEBOUNCE_MS) {
+			DoMove(d);
+			g_btn_last_repeat_ms = now_ms;
+			g_btn_first_repeat_ms = now_ms;
+		}
+	}
+	else {
+		// pierwszy repeat po BTN_REPEAT_DELAY_MS
+		if (g_btn_first_repeat_ms && (now_ms - g_btn_first_repeat_ms) >= BTN_REPEAT_DELAY_MS) {
+			DoMove(d);
+			g_btn_first_repeat_ms = 0;
+			g_btn_last_repeat_ms = now_ms;
+		}
+		else if (!g_btn_first_repeat_ms) {
 			// kolejne repeaty co BTN_REPEAT_MS
 			if ((now_ms - g_btn_last_repeat_ms) >= BTN_REPEAT_MS) {
 				DoMove(d);
@@ -947,31 +999,38 @@ static void HandleInput(uint32_t now_ms) {
 }
 
 
+
 void gameOver(void) {
-	if (gameStatus == 0) {
-		BSP_LCD_DisplayStringAt(0, 80, (uint8_t *)"Game over. You lost.", CENTER_MODE);
-		BSP_LCD_DisplayStringAt(0, 100, (uint8_t *)"Press \'Reset\' to play again.", CENTER_MODE);
-		while(1);
-	}
+	gameOverState = 1;
+	paused = 1;
+
+	BSP_LCD_SetTextColor(LCD_COLOR_RED);
+	BSP_LCD_DisplayStringAt(0, 80, (uint8_t*)"GAME OVER", CENTER_MODE);
 	if (gameStatus == 2) {
-		BSP_LCD_DisplayStringAt(0, 80, (uint8_t *)"Congratulations. You won.", CENTER_MODE);
-		BSP_LCD_DisplayStringAt(0, 100, (uint8_t *)"Press \'Reset\' to play again.", CENTER_MODE);
-		while(1);
+		BSP_LCD_DisplayStringAt(0, 100, (uint8_t*)"Congratulations. You won!", CENTER_MODE);
 	}
+	else {
+		BSP_LCD_DisplayStringAt(0, 100, (uint8_t*)"Pinky caught you.", CENTER_MODE);
+	}
+	BSP_LCD_SetTextColor(LCD_COLOR_WHITE);
+	BSP_LCD_DisplayStringAt(0, 120, (uint8_t*)"Press SEL to restart", CENTER_MODE);
+
+	// Pasek HUD pokaże „GAME OVER” po klatce przez DrawHUD()
 }
+
 
 #if 0
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_PIN) {
-  if (GPIO_PIN == IOE_IT_PIN) {
-    JoyState = BSP_JOY_GetState();   // DODAJ TO
-    switch (JoyState) {
-      case JOY_DOWN:  moveDown();  break;
-      case JOY_UP:    moveUp();    break;
-      case JOY_LEFT:  moveLeft();  break;
-      case JOY_RIGHT: moveRight(); break;
-      default: break;
-    }
-  }
+	if (GPIO_PIN == IOE_IT_PIN) {
+		JoyState = BSP_JOY_GetState();   // <— DODAJ TO
+		switch (JoyState) {
+		case JOY_DOWN:  moveDown();  break;
+		case JOY_UP:    moveUp();    break;
+		case JOY_LEFT:  moveLeft();  break;
+		case JOY_RIGHT: moveRight(); break;
+		default: break;
+		}
+	}
 }
 #endif
 
@@ -1007,3 +1066,4 @@ void assert_failed(uint8_t* file, uint32_t line)
 	   /* USER CODE END 6 */
 }
 #endif /* USE_FULL_ASSERT */
+
