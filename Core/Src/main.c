@@ -47,9 +47,12 @@ typedef struct {
 
 /* Private variables ---------------------------------------------------------*/
 /* USER CODE BEGIN PV */
+Dir pacmanDir = DIR_RIGHT;   // kierunek animacji Pac-Mana
 
-// --- A3: Wejscie z debounce + auto-repeat (polling) ---
-typedef enum { DIR_NONE=0, DIR_UP, DIR_DOWN, DIR_LEFT, DIR_RIGHT } Dir;
+/* --- D5: Bonus fruit --- */
+uint8_t fruitExists = 0;
+uint8_t fruitRow = 0;
+uint8_t fruitCol = 0;
 
 #define BTN_DEBOUNCE_MS       20U    // filtr drgaĹ„ stykĂłw
 #define BTN_REPEAT_DELAY_MS  160U    // po tyle ms pierwszy powtĂłrzony krok
