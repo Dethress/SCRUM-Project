@@ -65,6 +65,13 @@ uint8_t fruitExists = 0;
 uint8_t fruitRow = 0;
 uint8_t fruitCol = 0;
 
+uint32_t fruitSpawnTimer = 0;       // liczy czas do spawnu
+uint32_t fruitDespawnTimer = 0;     // liczy czas do zniknięcia
+
+uint32_t fruitSpawnInterval = 0;    // 15000 lub 20000 ms
+const uint32_t fruitLifetime = 6000; // owoc znika po 6 s
+
+const uint16_t fruitColor = LCD_COLOR_MAGENTA; // kolor owoca
 #define BTN_DEBOUNCE_MS       20U    // filtr drgaĹ„ stykĂłw
 #define BTN_REPEAT_DELAY_MS  160U    // po tyle ms pierwszy powtĂłrzony krok
 #define BTN_REPEAT_MS         80U    // odstÄ™p kolejnych krokĂłw przy trzymaniu
