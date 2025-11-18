@@ -24,6 +24,7 @@
 /* USER CODE BEGIN Includes */
 #include <stdlib.h>
 #include <stdio.h>
+#include <math.h>
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -32,6 +33,10 @@ typedef struct {
 	uint8_t row;
 	uint8_t col;
 } Position;
+
+// --- A3: Wejście z debounce + auto-repeat (polling) ---
+typedef enum { DIR_NONE = 0, DIR_UP, DIR_DOWN, DIR_LEFT, DIR_RIGHT } Dir;
+
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
