@@ -44,6 +44,12 @@ typedef enum { DIR_NONE = 0, DIR_UP, DIR_DOWN, DIR_LEFT, DIR_RIGHT } Dir;
 #define NROW 12
 #define NCOL 16
 #define SQ_SIZE 240/NROW
+
+/* --- D4: tunnel teleport --- */
+#define TUNNEL_ROW   (NROW/2)
+#define TUNNEL_LEFT  0
+#define TUNNEL_RIGHT (NCOL-1)
+
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
