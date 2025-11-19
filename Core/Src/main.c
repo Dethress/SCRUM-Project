@@ -87,6 +87,11 @@ uint8_t pacAnimFrame = 0;            // 0,1,2
 uint32_t pacAnimTimer = 0;           // ms od ostatniej klatki
 const uint32_t pacAnimDuration = 100; // zmiana co 100 ms
 
+/* --- D3: Power-up freeze --- */
+uint8_t freezeActive = 0;           // 1 = Pinky zamrożony
+uint32_t freezeTimer = 0;           // odlicza 3 sekundy
+uint32_t freezeDuration = 3000; // będzie nadpisane przez difficultyLevel
+
 #define BTN_DEBOUNCE_MS       20U    // filtr drgań styków
 #define BTN_REPEAT_DELAY_MS  160U    // po tyle ms pierwszy powtórzony krok
 #define BTN_REPEAT_MS         80U    // odstęp kolejnych kroków przy trzymaniu
