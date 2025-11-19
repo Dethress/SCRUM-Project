@@ -72,6 +72,16 @@ uint32_t fruitSpawnInterval = 0;    // 15000 lub 20000 ms
 const uint32_t fruitLifetime = 6000; // owoc znika po 6 s
 
 const uint16_t fruitColor = LCD_COLOR_MAGENTA; // kolor owoca
+
+/* --- E3: LED behaviour --- */
+uint32_t ledTimer = 0;          // timer LED heartbeat
+uint32_t ledBlinkTimer = 0;     // timer migania power-up
+uint8_t ledState = 0;           // zapamiętany stan LED (0/1)
+
+uint8_t lifeLostFlash = 0;      // aktywny efekt utraty życia
+uint32_t lifeLostTimer = 0;     // timer do błysków po utracie życia
+uint8_t lifeLostCount = 0;      // liczba wykonanych błysków
+
 #define BTN_DEBOUNCE_MS       20U    // filtr drgaĹ„ stykĂłw
 #define BTN_REPEAT_DELAY_MS  160U    // po tyle ms pierwszy powtĂłrzony krok
 #define BTN_REPEAT_MS         80U    // odstÄ™p kolejnych krokĂłw przy trzymaniu
