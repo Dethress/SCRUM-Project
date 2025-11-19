@@ -82,6 +82,15 @@ uint8_t lifeLostFlash = 0;      // aktywny efekt utraty życia
 uint32_t lifeLostTimer = 0;     // timer do błysków po utracie życia
 uint8_t lifeLostCount = 0;      // liczba wykonanych błysków
 
+/* --- E2: Pac-Man mouth animation --- */
+uint8_t pacAnimFrame = 0;            // 0,1,2
+uint32_t pacAnimTimer = 0;           // ms od ostatniej klatki
+const uint32_t pacAnimDuration = 100; // zmiana co 100 ms
+
+uint8_t lifeLostFlash = 0;      // aktywny efekt utraty życia
+uint32_t lifeLostTimer = 0;     // timer do błysków po utracie życia
+uint8_t lifeLostCount = 0;      // liczba wykonanych błysków
+
 #define BTN_DEBOUNCE_MS       20U    // filtr drgaĹ„ stykĂłw
 #define BTN_REPEAT_DELAY_MS  160U    // po tyle ms pierwszy powtĂłrzony krok
 #define BTN_REPEAT_MS         80U    // odstÄ™p kolejnych krokĂłw przy trzymaniu
