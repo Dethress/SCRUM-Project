@@ -87,13 +87,14 @@ uint8_t pacAnimFrame = 0;            // 0,1,2
 uint32_t pacAnimTimer = 0;           // ms od ostatniej klatki
 const uint32_t pacAnimDuration = 100; // zmiana co 100 ms
 
-uint8_t lifeLostFlash = 0;      // aktywny efekt utraty życia
-uint32_t lifeLostTimer = 0;     // timer do błysków po utracie życia
-uint8_t lifeLostCount = 0;      // liczba wykonanych błysków
+/* --- D3: Power-up freeze --- */
+uint8_t freezeActive = 0;           // 1 = Pinky zamrożony
+uint32_t freezeTimer = 0;           // odlicza 3 sekundy
+uint32_t freezeDuration = 3000; // będzie nadpisane przez difficultyLevel
 
-#define BTN_DEBOUNCE_MS       20U    // filtr drgaĹ„ stykĂłw
-#define BTN_REPEAT_DELAY_MS  160U    // po tyle ms pierwszy powtĂłrzony krok
-#define BTN_REPEAT_MS         80U    // odstÄ™p kolejnych krokĂłw przy trzymaniu
+#define BTN_DEBOUNCE_MS       20U    // filtr drgań styków
+#define BTN_REPEAT_DELAY_MS  160U    // po tyle ms pierwszy powtórzony krok
+#define BTN_REPEAT_MS         80U    // odstęp kolejnych kroków przy trzymaniu
 
 static Dir     g_btn_last = DIR_NONE;        // ostatni stabilny kierunek
 static uint32_t g_btn_last_change_ms = 0;    // kiedy zmieniĹ‚ siÄ™ stan
