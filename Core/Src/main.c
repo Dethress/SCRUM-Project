@@ -58,9 +58,34 @@ typedef enum { DIR_NONE = 0, DIR_UP, DIR_DOWN, DIR_LEFT, DIR_RIGHT } Dir;
 
 /* Private variables ---------------------------------------------------------*/
 /* USER CODE BEGIN PV */
+Dir pacmanDir = DIR_RIGHT;   // kierunek animacji Pac-Mana
 
-// --- A3: Wejście z debounce + auto-repeat (polling) ---
-typedef enum { DIR_NONE = 0, DIR_UP, DIR_DOWN, DIR_LEFT, DIR_RIGHT } Dir;
+/* --- D5: Bonus fruit --- */
+uint8_t fruitExists = 0;
+uint8_t fruitRow = 0;
+uint8_t fruitCol = 0;
+
+uint32_t fruitSpawnTimer = 0;       // liczy czas do spawnu
+uint32_t fruitDespawnTimer = 0;     // liczy czas do zniknięcia
+
+uint32_t fruitSpawnInterval = 0;    // 15000 lub 20000 ms
+const uint32_t fruitLifetime = 6000; // owoc znika po 6 s
+
+const uint16_t fruitColor = LCD_COLOR_MAGENTA; // kolor owoca
+
+/* --- E3: LED behaviour --- */
+uint32_t ledTimer = 0;          // timer LED heartbeat
+uint32_t ledBlinkTimer = 0;     // timer migania power-up
+uint8_t ledState = 0;           // zapamiętany stan LED (0/1)
+
+uint8_t lifeLostFlash = 0;      // aktywny efekt utraty życia
+uint32_t lifeLostTimer = 0;     // timer do błysków po utracie życia
+uint8_t lifeLostCount = 0;      // liczba wykonanych błysków
+
+/* --- E2: Pac-Man mouth animation --- */
+uint8_t pacAnimFrame = 0;            // 0,1,2
+uint32_t pacAnimTimer = 0;           // ms od ostatniej klatki
+const uint32_t pacAnimDuration = 100; // zmiana co 100 ms
 
 #define BTN_DEBOUNCE_MS       20U    // filtr drgań styków
 #define BTN_REPEAT_DELAY_MS  160U    // po tyle ms pierwszy powtórzony krok
