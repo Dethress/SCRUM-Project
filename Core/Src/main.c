@@ -301,7 +301,10 @@ void DrawHUD (void);
 void quickRestart(void);
 void showPauseBannerInHUD(void);
 void clearPauseBannerInHUD(void);
-void loseLifeAndRespawn(void); 
+void drawWalls(void);
+void loseLifeAndRespawn(void);
+void UpdateLED(uint32_t now_ms);
+uint8_t difficultyLevel = 1;   // 0 = Easy, 1 = Normal, 2 = Hard
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
