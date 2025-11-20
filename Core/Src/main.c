@@ -103,6 +103,20 @@ PinkyMode pinkyMode = PINKY_CHASE;
 uint32_t pinkyModeTimer = 0;    // licznik czasu fazy chase/scatter
 const uint32_t pinkyModeDuration = 2000; // 2 sekundy
 
+/* --- C2: ghost speed control --- */
+uint8_t ghostSpeedLevel = 1;   // 0 = wolny, 1 = normalny, 2 = szybki
+
+// prędkości duszka: co ile ms wykonuje ruch
+// 6 pól/s → 166 ms, 9 pól/s → 111 ms, 12 pól/s → 83 ms
+const uint16_t ghostSpeedMs[3] = { 166, 111, 83 };
+// Freeze time depending on difficulty (EASY=longer, HARD=shorter)
+const uint16_t freezeTimeByDifficulty[3] = { 4000, 3000, 2000 };
+
+
+#define BTN_DEBOUNCE_MS       20U    // filtr drgań styków
+#define BTN_REPEAT_DELAY_MS  160U    // po tyle ms pierwszy powtórzony krok
+#define BTN_REPEAT_MS         80U    // odstęp kolejnych kroków przy trzymaniu
+
 static Dir     g_btn_last = DIR_NONE;        // ostatni stabilny kierunek
 static uint32_t g_btn_last_change_ms = 0;    // kiedy zmieniĹ‚ siÄ™ stan
 static uint32_t g_btn_last_repeat_ms = 0;    // kiedy byĹ‚ ostatni â€žrepeatâ€ť
