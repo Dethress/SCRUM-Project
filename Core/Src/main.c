@@ -96,6 +96,13 @@ uint8_t powerupRow = 0;
 uint8_t powerupCol = 0;
 uint8_t powerupExists = 0;          // 1 = power-up leży na planszy
 
+/* --- D2: Pinky chase/scatter --- */
+typedef enum { PINKY_CHASE = 0, PINKY_SCATTER = 1 } PinkyMode;
+PinkyMode pinkyMode = PINKY_CHASE;
+
+uint32_t pinkyModeTimer = 0;    // licznik czasu fazy chase/scatter
+const uint32_t pinkyModeDuration = 2000; // 2 sekundy
+
 static Dir     g_btn_last = DIR_NONE;        // ostatni stabilny kierunek
 static uint32_t g_btn_last_change_ms = 0;    // kiedy zmieniĹ‚ siÄ™ stan
 static uint32_t g_btn_last_repeat_ms = 0;    // kiedy byĹ‚ ostatni â€žrepeatâ€ť
