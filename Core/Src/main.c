@@ -92,6 +92,27 @@ uint8_t freezeActive = 0;           // 1 = Pinky zamrożony
 uint32_t freezeTimer = 0;           // odlicza 3 sekundy
 uint32_t freezeDuration = 3000; // będzie nadpisane przez difficultyLevel
 
+uint8_t powerupRow = 0;
+uint8_t powerupCol = 0;
+uint8_t powerupExists = 0;          // 1 = power-up leży na planszy
+
+/* --- D2: Pinky chase/scatter --- */
+typedef enum { PINKY_CHASE = 0, PINKY_SCATTER = 1 } PinkyMode;
+PinkyMode pinkyMode = PINKY_CHASE;
+
+uint32_t pinkyModeTimer = 0;    // licznik czasu fazy chase/scatter
+const uint32_t pinkyModeDuration = 2000; // 2 sekundy
+
+/* --- C2: ghost speed control --- */
+uint8_t ghostSpeedLevel = 1;   // 0 = wolny, 1 = normalny, 2 = szybki
+
+// prędkości duszka: co ile ms wykonuje ruch
+// 6 pól/s → 166 ms, 9 pól/s → 111 ms, 12 pól/s → 83 ms
+const uint16_t ghostSpeedMs[3] = { 166, 111, 83 };
+// Freeze time depending on difficulty (EASY=longer, HARD=shorter)
+const uint16_t freezeTimeByDifficulty[3] = { 4000, 3000, 2000 };
+
+
 #define BTN_DEBOUNCE_MS       20U    // filtr drgań styków
 #define BTN_REPEAT_DELAY_MS  160U    // po tyle ms pierwszy powtórzony krok
 #define BTN_REPEAT_MS         80U    // odstęp kolejnych kroków przy trzymaniu
