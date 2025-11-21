@@ -406,14 +406,8 @@ int main(void) {
 		uint32_t now_ms = HAL_GetTick();
 		uint32_t elapsed = now_ms - frame_start;
 		if (elapsed < FRAME_MS_TARGET) {
-			HAL_Delay(FRAME_MS_TARGET - elapsed);
+	 		HAL_Delay(FRAME_MS_TARGET - elapsed);
 		}
-
-	  // 5) Warunki konca gry
-	  if (pointsCounter >= totalDots) { gameStatus = 2; gameOver(); }
-	  if ((pinkyPos.row == pacmanPos.row) && (pinkyPos.col == pacmanPos.col)) {
-	    loseLifeAndRespawn();
-	  }
 
 		/// 4) Harmonogram ducha: co ~500 ms (tylko gdy nie pauzujemy)
 		if (!paused && !gameOverState) {
