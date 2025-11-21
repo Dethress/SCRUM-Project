@@ -409,24 +409,9 @@ int main(void) {
 	 		HAL_Delay(FRAME_MS_TARGET - elapsed);
 		}
 
-		/// 4) Harmonogram ducha: co ~500 ms (tylko gdy nie pauzujemy)
-		if (!paused && !gameOverState) {
-			if (firstFrame) { firstFrame = 0; pinky_timer_ms = 500U; }
-			pinky_timer_ms += g_frame_ms;
-			while (pinky_timer_ms >= 500U) {
-				movePinky();
-				pinky_timer_ms -= 500U;
-			}
-
-			// 5) Warunki końca gry
-			if (pointsCounter >= totalDots) { gameStatus = 2; gameOver(); }
-			if ((pinkyPos.row == pacmanPos.row) && (pinkyPos.col == pacmanPos.col)) {
-				loseLifeAndRespawn();
-			}
-		}
-
-		// 6) HUD – odświeżaj co klatkę (również w pauzie/po GAME OVER)
-		DrawHUD();
+	  // 3) Rzeczywisty dt i FPS*10 (bez rysowania / logów)
+	  g_frame_ms = HAL_GetTick() - frame_start;
+	  UpdateLED(g_frame_ms);
 
 		/* USER CODE END WHILE */
 
