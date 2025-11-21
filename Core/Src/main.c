@@ -357,7 +357,8 @@ int main(void) {
 	BSP_LCD_Clear(LCD_COLOR_DARKGRAY);
 	BSP_LCD_SetFont(&Font12);
 	BSP_LCD_SetTextColor(LCD_COLOR_RED);
-
+	showStartMenu();
+	
 	// Configure joystick in polling mode:
 	/*
 	if (BSP_JOY_Init(JOY_MODE_GPIO) != IO_OK) {
