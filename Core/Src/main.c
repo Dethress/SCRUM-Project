@@ -266,7 +266,7 @@ void myDrawFullRectangle(uint16_t, uint16_t, uint16_t, uint16_t, uint16_t);
 void myDrawFullCircle(uint16_t, uint16_t, uint16_t, uint16_t);
 void gameOver(void);
 void DrawHeart(uint16_t x, uint16_t y, uint16_t color);
-void DrawHUD(void);
+void DrawHUD (void);
 void quickRestart(void);
 void showPauseBannerInHUD(void);
 void clearPauseBannerInHUD(void);
@@ -1037,6 +1037,51 @@ void myDrawFullRectangle(uint16_t Xpos, uint16_t Ypos, uint16_t Width, uint16_t 
     BSP_LCD_SetTextColor(backup_color);
 }
 
+/* B1: rysowanie serduszka i hud*/
+
+//male serduszko 16x16 tworzone z 2 kolek
+
+void DrawHeart(uint16_t x, uint16_t y, uint16_t color){
+//dwa poswiaty 
+myDrawFullCircle(x+5, y+5, 5, color);
+myDrawFullCircle(x+11, y+5, 5, color);
+myDrawFullRectangle(x+2, y+8, 12, 6, color);
+myDrawFullRectangle(x+5, y+12, 6, 5, color);
+myDrawFullRectangle(x+7, y+16, 2, 3, color);
+}
+
+// Pasek HUD w gornym rzedzie (wysokosc = SQ_SIZE-1)
+void DrawHUD(void) {
+  char buf[32];
+
+  // Czarny pasek na gorze (nie boj sie: rysujemy go co klatke, jest maly)
+  myDrawFullRectangle(0, 0, 320, SQ_SIZE-1, LCD_COLOR_BLACK);
+
+  // Serduszka po lewej (3 szt.)
+  for (uint8_t i = 0; i < 3; ++i) {
+    if (i < livesLeft) {
+      DrawHeart(2 + i*20, 2, LCD_COLOR_RED);        // Zywe serce
+    } else {
+      DrawHeart(2 + i*20, 2, LCD_COLOR_DARKGRAY);   // Puste serce
+    }
+  }
+
+// Wynik
+  BSP_LCD_SetTextColor(LCD_COLOR_WHITE);
+  snprintf(buf, sizeof(buf), "SCORE: %u", (unsigned)pointsCounter);
+  BSP_LCD_DisplayStringAt(80, 4, (uint8_t*)buf, LEFT_MODE);
+}
+
+void drawWalls(void) {
+  for (uint8_t r = 0; r < NROW; ++r) {
+    for (uint8_t c = 0; c < NCOL; ++c) {
+      if (walls[r][c]) {
+        // Zamaluj kafelek na niebieski
+    	  myDrawFullRectangle(c*SQ_SIZE+1, r*SQ_SIZE+1, SQ_SIZE-1, SQ_SIZE-1, LCD_COLOR_BLUE);
+      }
+    }
+  }
+}
 
 void myDrawFullCircle(uint16_t centerX, uint16_t centerY, uint16_t radius, uint16_t color) {
     int16_t i, j;
